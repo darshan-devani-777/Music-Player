@@ -20,9 +20,9 @@ exports.signup = async (req, res) => {
     const newUser = await User.create({
       name,
       email,
-      password,      
+      password,
       loginType: 'local',
-      role
+      role,
     });
 
     res.status(201).json({
@@ -33,17 +33,18 @@ exports.signup = async (req, res) => {
           _id: newUser._id,
           name: newUser.name,
           email: newUser.email,
-          role:newUser.role
+          role: newUser.role,
         },
       },
     });
+
   } catch (err) {
     if (err.name === "ValidationError") {
       const errors = Object.values(err.errors).map(e => e.message);
       return res.status(400).json({
         status: false,
         message: "Validation failed",
-        errors: errors,
+        errors,
       });
     }
 
@@ -57,6 +58,13 @@ exports.signup = async (req, res) => {
 // LOGIN USER
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      status: false,
+      message: "Email and password are required",
+    });
+  }
 
   try {
     const user = await User.findOne({ email });
@@ -83,7 +91,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Generate tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
@@ -93,7 +100,7 @@ exports.login = async (req, res) => {
       data: {
         user: {
           _id: user._id,
-          Name: user.Name,
+          name: user.name,
           email: user.email,
           role: user.role,
         },
@@ -101,6 +108,7 @@ exports.login = async (req, res) => {
         refreshToken,
       },
     });
+
   } catch (err) {
     res.status(500).json({
       status: false,

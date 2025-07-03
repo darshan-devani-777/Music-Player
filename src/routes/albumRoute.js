@@ -4,21 +4,72 @@ const upload = require("../middlewares/upload");
 const albumController = require("../controllers/albumController");
 const authMiddleware = require('../middlewares/authMiddleware');
 const { isAdmin } = require('../middlewares/roleMiddleware');
+const { validationResult } = require("express-validator");
+const { createAlbumValidation, updateAlbumValidation } = require("../validation/albumValidator");
+
+// VALIDATE
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      message: "Validation failed",
+      errors: errors.array().map(err => err.msg),
+    });
+  }
+  next();
+};
 
 // CREATE ALBUM (Admin)
-router.post("/create/albums", upload.array("albumImages", 10) , authMiddleware , isAdmin , albumController.createAlbum
+router.post(
+  "/album/create-album",
+  authMiddleware,
+  isAdmin,
+  upload.array("albumImage"),
+  createAlbumValidation,
+  validate,
+  albumController.createAlbum
 );
 
-// GET ALL ALBUM (Admin / User)
-router.get("/get-all-albums/albums", authMiddleware , albumController.getAllAlbums);
+// GET ALL ALBUMS (Admin/User)
+router.get(
+  "/album/get-all-album",
+  authMiddleware,
+  albumController.getAllAlbums
+);
+
+// GET NEW RELEASED ALBUMS
+router.get(
+  "/album/new-released-album",
+  authMiddleware,
+  albumController.getNewReleasedAlbums
+);
 
 // GET SPECIFIC ALBUM (Admin)
-router.get("/get-specific-album/albums/:id", authMiddleware , isAdmin , albumController.getAlbumById);
+router.get(
+  "/album/get-specific-album/:id",
+  authMiddleware,
+  isAdmin,
+  albumController.getAlbumById
+);
 
-// UPDATE IMAGE (Admin)
-router.put("/update-album/albums/:id", authMiddleware , isAdmin , upload.array("albumImages", 10), albumController.updateAlbum);
+// UPDATE ALBUM (Admin)
+router.put(
+  "/album/update-album/:id",
+  authMiddleware,
+  isAdmin,
+  upload.array("albumImage"), 
+  updateAlbumValidation,
+  validate,
+  albumController.updateAlbum
+);
 
 // DELETE ALBUM (Admin)
-router.delete("/delete-album/albums/:id", authMiddleware , isAdmin , albumController.deleteAlbum);
-  
+router.delete(
+  "/album/delete-album/:id",
+  authMiddleware,
+  isAdmin,
+  albumController.deleteAlbum
+);
+
 module.exports = router;

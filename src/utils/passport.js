@@ -2,7 +2,7 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/userModel");
 
-// Passport
+// PASSPORT
 passport.use(
   new GoogleStrategy(
     {
@@ -32,12 +32,12 @@ passport.use(
   )
 );
 
-// Serialize user (stores user ID)
+// SERIALIZE USER (stores user ID)
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
-// Deserialize user by ID
+// DESERIALIZE USER BY ID
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);

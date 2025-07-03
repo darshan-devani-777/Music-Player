@@ -4,14 +4,34 @@ const authController = require('../controllers/userController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const { isAdmin } = require('../middlewares/roleMiddleware');
 const passport = require("passport");
+const {
+  signupValidation,
+  loginValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation
+} = require("../validation/userValidator");
+const { validationResult } = require("express-validator");
+
+// VALIDATE
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      message: "Validation failed",
+      errors: errors.array().map(e => e.msg),
+    });
+  }
+  next();
+};
 
 // SIGNUP USER
-router.post('/users/signup', authController.signup);
+router.post('/users/signup', signupValidation, validate, authController.signup);
 
 // LOGIN USER
-router.post('/users/login', authController.login);
+router.post('/users/login', loginValidation, validate, authController.login);
 
-// GOOGLE LOGIN - Redirect to Google
+// GOOGLE LOGIN
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 // GOOGLE CALLBACK
@@ -22,9 +42,23 @@ router.get(
 );
 
 // FORGOT PASSWORD (Admin)
-router.post('/admins/forgot-password', authMiddleware , isAdmin , authController.forgotPassword);
+router.post(
+  '/admins/forgot-password',
+  authMiddleware,
+  isAdmin,
+  forgotPasswordValidation,
+  validate,
+  authController.forgotPassword
+);
 
 // RESET PASSWORD (Admin)
-router.post('/admins/reset-password', authMiddleware , isAdmin , authController.resetPassword);
+router.post(
+  '/admins/reset-password',
+  authMiddleware,
+  isAdmin,
+  resetPasswordValidation,
+  validate,
+  authController.resetPassword
+);
 
 module.exports = router;
