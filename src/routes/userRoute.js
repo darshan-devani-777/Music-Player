@@ -34,6 +34,9 @@ router.post('/users/login', loginValidation, validate, authController.login);
 // GET ALL USER
 router.get("/users/get-all-user", authMiddleware , isAdmin , authController.getAllUsers);
 
+// UPDATE USER ROLE
+router.patch("/users/update-role/:userId/", authMiddleware, isAdmin, authController.updateUserRole);
+
 // DELETE USER
 router.delete("/users/delete-user/:id", authMiddleware , isAdmin , authController.deleteUser);
 

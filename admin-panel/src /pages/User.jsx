@@ -3,6 +3,8 @@ import api from "../api/axios";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [newRole, setNewRole] = useState("");
 
   // FETCH USER
   const fetchUsers = async () => {
@@ -23,6 +25,37 @@ export default function Users() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // EDIT USER ROLE
+  const handleEditRole = async (userId) => {
+    if (!newRole) {
+      alert("Please select a role");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await api.patch(
+        `/auth/users/update-role/${userId}`,
+        {
+          role: newRole,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("User Role Updated Successfully...");
+      setEditingUserId(null);
+      setNewRole("");
+      fetchUsers();
+    } catch (err) {
+      console.error("Failed to update role:", err);
+      alert("Error updating role");
+    }
+  };
 
   // DELETE USER
   const handleDelete = async (userId) => {
@@ -97,12 +130,53 @@ export default function Users() {
                     {new Date(user.createdAt).toLocaleString()}
                   </td>
                   <td className="p-3 border dark:border-gray-600">
+                    {/* Edit Role Button */}
+                    <button
+                      onClick={() => {
+                        setEditingUserId(user._id);
+                        setNewRole(user.role);
+                      }}
+                      className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition duration-300 mr-2 cursor-pointer"
+                    >
+                      Edit Role
+                    </button>
+
+                    {/* Delete Button */}
                     <button
                       onClick={() => handleDelete(user._id)}
                       className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-700 transition duration-300 cursor-pointer"
                     >
                       Delete
                     </button>
+
+                    {/* Conditionally show role editing form */}
+                    {editingUserId === user._id && (
+                      <div className="mt-2">
+                        <select
+                          value={newRole}
+                          onChange={(e) => setNewRole(e.target.value)}
+                          className="border px-2 py-1 text-sm rounded mr-2 text-white cursor-pointer"
+                        >
+                          <option value="">Select Role</option>
+                          <option value="user">User</option>
+                          <option value="admin">Admin</option>
+                        </select>
+
+                        <button
+                          onClick={() => handleEditRole(user._id)}
+                          className="bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-700 transition duration-300 mr-1 cursor-pointer"
+                        >
+                          Save
+                        </button>
+
+                        <button
+                          onClick={() => setEditingUserId(null)}
+                          className="bg-gray-500 text-white text-sm px-3 py-1 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
