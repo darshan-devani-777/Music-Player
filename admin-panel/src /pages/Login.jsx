@@ -16,7 +16,7 @@ export default function Login() {
     if (user) {
       const parsedUser = JSON.parse(user);
       if (parsedUser?.role === "admin") {
-        navigate(from, { replace: true });
+        navigate(from, { replace: true }); 
       }
     }
   }, [from, navigate]);
