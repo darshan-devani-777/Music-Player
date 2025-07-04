@@ -1,0 +1,315 @@
+import { useEffect, useState } from "react";
+import api from "../api/axios";
+
+export default function Playlists() {
+  const [playlists, setPlaylists] = useState([]);
+  const [albums, setAlbums] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    playlistImage: [],
+    selectedAlbums: [],
+  });
+  const [editId, setEditId] = useState(null);
+
+  const token = localStorage.getItem("token");
+
+  // FETCH PLAYLIST
+  const fetchPlaylists = async () => {
+    try {
+      const res = await api.get("auth/playlist/get-all-playlist", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPlaylists(res.data.data);
+    } catch (err) {
+      console.error("Error fetching playlists:", err);
+      alert("Failed to fetch playlists");
+    }
+  };
+
+  // FETCH ALBUMS
+  const fetchAlbums = async () => {
+    try {
+      const res = await api.get("auth/album/get-all-album", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAlbums(res.data.data);
+    } catch (err) {
+      console.error("Error fetching albums:", err);
+    }
+  };
+
+  // FORM SUBMIT
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    const data = new FormData();
+    data.append("title", formData.title);
+    data.append("description", formData.description);
+
+    for (let albumId of formData.selectedAlbums) {
+      data.append("albums", albumId);
+    }
+
+    for (let i = 0; i < formData.playlistImage.length; i++) {
+      data.append("playlistImage", formData.playlistImage[i]);
+    }
+
+    try {
+      if (editId) {
+        await api.put(`auth/playlist/update-playlist/${editId}`, data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } else {
+        await api.post("auth/playlist/create-playlist", data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+
+      fetchPlaylists();
+      setFormData({
+        title: "",
+        description: "",
+        playlistImage: [],
+        selectedAlbums: [],
+      });
+      setEditId(null);
+      setShowForm(false);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message || err.message || JSON.stringify(err);
+      alert("Failed to save playlist: " + msg);
+    }
+  };
+
+  // EDIT FORM
+  const openEditForm = (playlist) => {
+    setEditId(playlist._id);
+    setFormData({
+      title: playlist.title,
+      description: playlist.description,
+      playlistImage: [],
+      selectedAlbums: playlist.albums.map((a) => a._id),
+    });
+    setShowForm(true);
+  };
+
+  // DELETE PLAYLIST
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this playlist?"))
+      return;
+    try {
+      await api.delete(`auth/playlist/delete-playlist/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchPlaylists();
+    } catch (err) {
+      alert("Failed to delete playlist");
+    }
+  };
+
+  // ADD PLAYLIST
+  const openAddForm = () => {
+    setEditId(null);
+    setFormData({
+      title: "",
+      description: "",
+      playlistImage: [],
+      selectedAlbums: [],
+    });
+    setShowForm(true);
+  };
+
+  useEffect(() => {
+    fetchPlaylists();
+    fetchAlbums();
+  }, []);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-7">
+        <h2 className="text-2xl font-semibold underline">Playlist Management</h2>
+        <button
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
+          onClick={openAddForm}
+        >
+          Add Playlist
+        </button>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
+              <th className="p-3 border dark:border-gray-600">Image</th>
+              <th className="p-3 border dark:border-gray-600">Title</th>
+              <th className="p-3 border dark:border-gray-600">Description</th>
+              <th className="p-3 border dark:border-gray-600">Albums</th>
+              <th className="p-3 border dark:border-gray-600">Created By</th>
+              <th className="p-3 border dark:border-gray-600">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {playlists.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="p-4 text-center text-gray-500 dark:text-gray-400"
+                >
+                  No playlists found.
+                </td>
+              </tr>
+            ) : (
+              playlists.map((playlist) => (
+                <tr
+                  key={playlist._id}
+                  className="dark:hover:bg-gray-800 cursor-pointer"
+                >
+                  <td className="p-3 border dark:border-gray-600">
+                    {playlist.playlistImage.length > 0 ? (
+                      <img
+                        src={playlist.playlistImage[0]}
+                        alt={playlist.title}
+                        className="w-16 h-16 object-cover rounded border"
+                      />
+                    ) : (
+                      <span>No Image</span>
+                    )}
+                  </td>
+                  <td className="p-3 border dark:border-gray-600 text-white">
+                    {playlist.title}
+                  </td>
+                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
+                    {playlist.description}
+                  </td>
+                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
+                    {playlist.albums.map((a) => a.title).join(", ")}
+                  </td>
+                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
+                    {playlist.createdBy?.name || "Unknown"}
+                  </td>
+                  <td className="p-3 border dark:border-gray-600 space-x-2">
+                    <button
+                      className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition duration-300 cursor-pointer"
+                      onClick={() => openEditForm(playlist)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-700 transition duration-300 cursor-pointer"
+                      onClick={() => handleDelete(playlist._id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Playlist Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96">
+            <h2 className="text-xl font-semibold mb-4 text-center text-purple-500">
+              {editId ? "Update Playlist" : "Add Playlist"}
+            </h2>
+            <form onSubmit={handleFormSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
+                  Description
+                </label>
+                <textarea
+                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  required
+                ></textarea>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
+                  Image
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  name="playlistImage"
+                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  onChange={(e) =>
+                    setFormData({ ...formData, playlistImage: e.target.files })
+                  }
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
+                  Select Albums
+                </label>
+                <select
+                  multiple
+                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  value={formData.selectedAlbums}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      selectedAlbums: Array.from(
+                        e.target.selectedOptions,
+                        (option) => option.value
+                      ),
+                    })
+                  }
+                >
+                  {albums.map((album) => (
+                    <option key={album._id} value={album._id}>
+                      {album.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-between">
+                <button
+                  type="submit"
+                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
+                >
+                  {editId ? "Update" : "Add"}
+                </button>
+                <button
+                  type="button"
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
+                  onClick={() => setShowForm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
