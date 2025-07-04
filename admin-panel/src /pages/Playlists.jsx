@@ -139,7 +139,7 @@ export default function Playlists() {
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
           onClick={openAddForm}
         >
-          Add Playlist
+          + Playlist
         </button>
       </div>
 

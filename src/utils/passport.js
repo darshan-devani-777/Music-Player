@@ -24,7 +24,7 @@ passport.use(
           });
         }
     
-        return done(null, { ...user.toObject(), accessToken }); 
+        return done(null, { ...user.toObject(), accessToken , refreshToken}); 
       } catch (error) {
         return done(error, null);
       }
