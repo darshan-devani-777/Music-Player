@@ -24,14 +24,16 @@ exports.updateArtistValidation = [
     .notEmpty()
     .withMessage("Bio is required if provided"),
 
-  body("artistImage").custom((_, { req }) => {
-    if (req.body && req.body.artistImage !== undefined) {
-      if (!req.files || req.files.length === 0) {
-        throw new Error("At least one artist image is required.");
+    body("artistImage").custom((value, { req }) => {
+      // Only require files if artistImage is not a string URL
+      if (value && !value.startsWith("http")) {
+        if (!req.files || req.files.length === 0) {
+          throw new Error("At least one artist image is required.");
+        }
       }
-    }
-    return true;
-  }),
+      return true;
+    }),
+    
 
   body().custom((_, { req }) => {
     const body = req.body || {};

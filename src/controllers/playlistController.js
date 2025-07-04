@@ -43,7 +43,7 @@ exports.createPlaylist = async (req, res) => {
     console.error("Error creating playlist:", err);
     res.status(500).json({
       status: "error",
-      message: "Failed to create playlist",
+      message: err.message || "Failed to create playlist",
     });
   }
 };
@@ -150,9 +150,10 @@ exports.updatePlaylist = async (req, res) => {
     });
   } catch (err) {
     console.error("Error updating playlist:", err.message);
-    res
-      .status(500)
-      .json({ status: "error", message: "Failed to update playlist" });
+    res.status(500).json({
+      status: "error",
+      message: err.message || "Failed to update playlist",
+    });;
   }
 };
 

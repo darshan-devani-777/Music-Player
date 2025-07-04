@@ -117,6 +117,57 @@ exports.login = async (req, res) => {
   }
 };
 
+// GET ALL USER
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password"); 
+    res.status(200).json({
+      status: true,
+      message:"User Fetched Successfully...",
+      data: users,
+    });
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+
+// DELETE USER
+exports.deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "User Deleted Successfully...",
+      data: {
+        _id: deletedUser._id,
+        name: deletedUser.name,
+        email: deletedUser.email,
+        role: deletedUser.role,
+      },
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Failed to delete user",
+    });
+  }
+};
+
 // GOOGLE SIGNUP
 exports.googleSignup = async (req, res) => {
   try {
@@ -125,25 +176,27 @@ exports.googleSignup = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    res.status(200).json({
-      status: true,
-      message: "Google login successful...",
-      data: {
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role:user.role
-        },
-        accessToken,
-        refreshToken,
+    const payload = {
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
       },
-    });
+      accessToken,
+      refreshToken,
+    };
+
+    // Encode and redirect to React
+    const encoded = encodeURIComponent(JSON.stringify(payload));
+
+    res.redirect(`http://localhost:5173/auth/google/callback?data=${encoded}`);
   } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "Google login failed",
-    });
+    res.redirect(
+      `http://localhost:5173/auth/google/callback?error=${encodeURIComponent(
+        "Google login failed"
+      )}`
+    );
   }
 };
 

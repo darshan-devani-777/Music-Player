@@ -31,6 +31,12 @@ router.post('/users/signup', signupValidation, validate, authController.signup);
 // LOGIN USER
 router.post('/users/login', loginValidation, validate, authController.login);
 
+// GET ALL USER
+router.get("/users/get-all-user", authMiddleware , isAdmin , authController.getAllUsers);
+
+// DELETE USER
+router.delete("/users/delete-user/:id", authMiddleware , isAdmin , authController.deleteUser);
+
 // GOOGLE LOGIN
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 

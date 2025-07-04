@@ -14,21 +14,22 @@ passport.use(
       try {
         const email = profile.emails[0].value;
         let user = await User.findOne({ email });
-
+    
         if (!user) {
           user = await User.create({
             name: profile.displayName,
             email: email,
             loginType: "google",
-            role:"user"
+            role: "user",
           });
         }
-
-        return done(null, user);
+    
+        return done(null, { ...user.toObject(), accessToken }); 
       } catch (error) {
         return done(error, null);
       }
     }
+    
   )
 );
 
