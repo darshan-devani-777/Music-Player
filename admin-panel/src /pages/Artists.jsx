@@ -11,6 +11,8 @@ export default function Artists() {
   });
   const [editId, setEditId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const artistsPerPage = 7;
 
   const token = localStorage.getItem("token");
 
@@ -101,14 +103,23 @@ export default function Artists() {
     fetchArtists();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   // FILTER ARTIST
   const filteredArtists = artists.filter((artist) => {
-    const query = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase();
     return (
-      artist.name?.toLowerCase().includes(query) ||
-      artist.bio?.toLowerCase().includes(query)
+      artist.name?.toLowerCase().includes(q) ||
+      artist.bio?.toLowerCase().includes(q)
     );
   });
+
+  const indexOfLast = currentPage * artistsPerPage;
+  const indexOfFirst = indexOfLast - artistsPerPage;
+  const currentArtists = filteredArtists.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredArtists.length / artistsPerPage);
 
   return (
     <div>
@@ -145,7 +156,7 @@ export default function Artists() {
             </tr>
           </thead>
           <tbody>
-            {filteredArtists.length === 0 ? (
+            {currentArtists.length === 0 ? (
               <tr>
                 <td
                   colSpan="5"
@@ -155,7 +166,7 @@ export default function Artists() {
                 </td>
               </tr>
             ) : (
-              filteredArtists.map((artist) => (
+              currentArtists.map((artist) => (
                 <tr
                   key={artist._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
@@ -199,6 +210,23 @@ export default function Artists() {
             )}
           </tbody>
         </table>
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 space-x-2">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === i + 1
+                    ? "bg-purple-600 text-white cursor-pointer transition duration-300"
+                    : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
+                } hover:bg-purple-700 transition`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Form Modal */}

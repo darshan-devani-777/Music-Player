@@ -6,6 +6,8 @@ export default function Users() {
   const [editingUserId, setEditingUserId] = useState(null);
   const [newRole, setNewRole] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 7;
 
   // FETCH USER
   const fetchUsers = async () => {
@@ -73,7 +75,7 @@ export default function Users() {
         },
       });
 
-      alert("User deleted successfully");
+      alert("User Deleted Successfully...");
       fetchUsers();
     } catch (err) {
       console.error("Delete failed:", err);
@@ -91,6 +93,17 @@ export default function Users() {
       user.loginType?.toLowerCase().includes(query)
     );
   });
+
+  // PAGINATION
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div>
@@ -131,7 +144,7 @@ export default function Users() {
                 </td>
               </tr>
             ) : (
-              filteredUsers.map((user) => (
+              currentUsers.map((user) => (
                 <tr
                   key={user._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
@@ -207,6 +220,24 @@ export default function Users() {
             )}
           </tbody>
         </table>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center mt-4 space-x-2">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => handlePageChange(i + 1)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === i + 1
+                    ? "bg-purple-600 text-white cursor-pointer transition duration-300"
+                    : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
+                } hover:bg-purple-700 transition`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ export default function GoogleCallback() {
       const { user, accessToken } = JSON.parse(decodeURIComponent(encodedData));
 
       if (user.role !== "admin") {
-        alert("Only admin can login");
+        alert("Only Admins are allowed.");
         navigate("/login");
       } else {
         localStorage.setItem("user", JSON.stringify(user));

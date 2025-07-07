@@ -13,6 +13,8 @@ export default function Playlists() {
   });
   const [editId, setEditId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const playlistsPerPage = 7;
 
   const token = localStorage.getItem("token");
 
@@ -132,16 +134,24 @@ export default function Playlists() {
     fetchAlbums();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   // FILTER PLAYLIST
   const filteredPlaylists = playlists.filter((playlist) => {
     const query = searchQuery.toLowerCase();
-  
     return (
       playlist.title.toLowerCase().includes(query) ||
       playlist.description.toLowerCase().includes(query) ||
       playlist.albums.some((album) => album.title.toLowerCase().includes(query))
     );
-  });  
+  });
+
+  const indexOfLast = currentPage * playlistsPerPage;
+  const indexOfFirst = indexOfLast - playlistsPerPage;
+  const currentPlaylists = filteredPlaylists.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredPlaylists.length / playlistsPerPage);
 
   return (
     <div>
@@ -180,7 +190,7 @@ export default function Playlists() {
             </tr>
           </thead>
           <tbody>
-            {filteredPlaylists.length === 0 ? (
+            {currentPlaylists.length === 0 ? (
               <tr>
                 <td
                   colSpan="6"
@@ -190,7 +200,7 @@ export default function Playlists() {
                 </td>
               </tr>
             ) : (
-              filteredPlaylists.map((playlist) => (
+              currentPlaylists.map((playlist) => (
                 <tr
                   key={playlist._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
@@ -237,6 +247,23 @@ export default function Playlists() {
             )}
           </tbody>
         </table>
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 gap-2">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === i + 1
+                    ? "bg-purple-600 text-white cursor-pointer transition duration-300"
+                    : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
+                } hover:bg-purple-700 transition`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Playlist Form Modal */}

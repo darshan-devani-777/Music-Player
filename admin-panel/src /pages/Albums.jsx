@@ -12,6 +12,8 @@ export default function Albums() {
   });
   const [editId, setEditId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const albumsPerPage = 7;
 
   const token = localStorage.getItem("token");
 
@@ -99,22 +101,29 @@ export default function Albums() {
     fetchAlbums();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   // FILTER ALBUM
   const filteredAlbums = albums.filter((album) => {
     const query = searchQuery.toLowerCase();
-
     const releaseDateObj = new Date(album.releaseDate);
     const day = releaseDateObj.getDate().toString().padStart(2, "0");
     const month = (releaseDateObj.getMonth() + 1).toString().padStart(2, "0");
     const year = releaseDateObj.getFullYear();
     const formattedDate = `${day}/${month}/${year}`;
-
     return (
       album.title.toLowerCase().includes(query) ||
       album.artist.toLowerCase().includes(query) ||
       formattedDate.includes(query)
     );
   });
+
+  const indexOfLast = currentPage * albumsPerPage;
+  const indexOfFirst = indexOfLast - albumsPerPage;
+  const currentAlbums = filteredAlbums.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredAlbums.length / albumsPerPage);
 
   return (
     <div>
@@ -152,7 +161,7 @@ export default function Albums() {
             </tr>
           </thead>
           <tbody>
-            {filteredAlbums.length === 0 ? (
+            {currentAlbums.length === 0 ? (
               <tr>
                 <td
                   colSpan="7"
@@ -162,7 +171,7 @@ export default function Albums() {
                 </td>
               </tr>
             ) : (
-              filteredAlbums.map((album) => (
+              currentAlbums.map((album) => (
                 <tr
                   key={album._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
@@ -214,6 +223,23 @@ export default function Albums() {
             )}
           </tbody>
         </table>
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 space-x-2">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === i + 1
+                    ? "bg-purple-600 text-white cursor-pointer transition duration-300"
+                    : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
+                } hover:bg-purple-700 transition`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Form Modal */}

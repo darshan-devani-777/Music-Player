@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import api from "../api/axios";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,38 +16,37 @@ export default function Login() {
     if (user) {
       const parsedUser = JSON.parse(user);
       if (parsedUser?.role === "admin") {
-        navigate(from, { replace: true }); 
+        navigate(from, { replace: true });
       }
     }
   }, [from, navigate]);
 
-  // LOGIN 
+  // LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/users/login", {
+      const res = await api.post("/auth/users/login", {
         email,
         password,
       });
-  
+
       const { accessToken, user } = res.data.data;
-  
+
+      if (user.role !== "admin") {
+        alert("Only Admins are allowed.");
+        return (window.location.href = "/");
+      }
+
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
-  
-      if (user.role !== "admin") {
-        alert("Only Admins are allowed. Redirecting...");
-        return window.location.href = "/";
-      }
-  
+
       navigate("/dashboard", { replace: true });
-  
     } catch (err) {
       console.error("Login error:", err);
       alert(err?.response?.data?.message || "Login failed");
     }
   };
-  
+
   return (
     <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
       <form
@@ -71,7 +70,7 @@ export default function Login() {
         </div>
 
         {/* Password Input */}
-        <div className="mb-6">
+        <div className="">
           <label className="block mb-1 text-gray-300">Password</label>
           <input
             type="password"
@@ -80,6 +79,16 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+        </div>
+
+        {/* Forgot Password Link */}
+        <div className="mb-4 text-right">
+          <a
+            href="/forgot-password"
+            className="text-[12px] text-purple-400 hover:text-purple-500 transition duration-200"
+          >
+            Forgot Password?
+          </a>
         </div>
 
         {/* Login Button */}

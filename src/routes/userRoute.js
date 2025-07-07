@@ -50,21 +50,17 @@ router.get(
   authController.googleSignup
 );
 
-// FORGOT PASSWORD (Admin)
+// FORGOT PASSWORD
 router.post(
   '/admins/forgot-password',
-  authMiddleware,
-  isAdmin,
   forgotPasswordValidation,
   validate,
   authController.forgotPassword
 );
 
-// RESET PASSWORD (Admin)
+// RESET PASSWORD
 router.post(
   '/admins/reset-password',
-  authMiddleware,
-  isAdmin,
   resetPasswordValidation,
   validate,
   authController.resetPassword

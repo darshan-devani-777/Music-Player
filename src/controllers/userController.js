@@ -1,7 +1,8 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { generateAccessToken, generateRefreshToken} = require("../utils/token");
+require("dotenv").config();
+const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 const sendEmail = require("../utils/sendEmail");
 
 // SIGNUP USER
@@ -21,7 +22,7 @@ exports.signup = async (req, res) => {
       name,
       email,
       password,
-      loginType: 'local',
+      loginType: "local",
       role,
     });
 
@@ -37,10 +38,9 @@ exports.signup = async (req, res) => {
         },
       },
     });
-
   } catch (err) {
     if (err.name === "ValidationError") {
-      const errors = Object.values(err.errors).map(e => e.message);
+      const errors = Object.values(err.errors).map((e) => e.message);
       return res.status(400).json({
         status: false,
         message: "Validation failed",
@@ -69,6 +69,11 @@ exports.login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
+    console.log("🔐 Logging in with:", email);
+    console.log("👤 User from DB:", user?.email);
+    console.log("🔑 Stored hashed password:", user?.password);
+    console.log("📝 Entered password:", password);
+
     if (!user) {
       return res.status(400).json({
         status: false,
@@ -79,7 +84,8 @@ exports.login = async (req, res) => {
     if (user.loginType === "google") {
       return res.status(400).json({
         status: false,
-        message: "This email is registered via Google. Please login using Google.",
+        message:
+          "This email is registered via Google. Please login using Google.",
       });
     }
 
@@ -108,7 +114,6 @@ exports.login = async (req, res) => {
         refreshToken,
       },
     });
-
   } catch (err) {
     res.status(500).json({
       status: false,
@@ -120,10 +125,10 @@ exports.login = async (req, res) => {
 // GET ALL USER
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password"); 
+    const users = await User.find().select("-password");
     res.status(200).json({
       status: true,
-      message:"User Fetched Successfully...",
+      message: "User Fetched Successfully...",
       data: users,
     });
   } catch (err) {
@@ -141,12 +146,16 @@ exports.updateUserRole = async (req, res) => {
   const allowedFields = ["role"];
   const sentFields = Object.keys(req.body);
 
-  const invalidFields = sentFields.filter(field => !allowedFields.includes(field));
+  const invalidFields = sentFields.filter(
+    (field) => !allowedFields.includes(field)
+  );
 
   if (invalidFields.length > 0) {
     return res.status(400).json({
       status: false,
-      message: `Only 'role' field is allowed to update. Invalid field(s): ${invalidFields.join(", ")}`,
+      message: `Only 'role' field is allowed to update. Invalid field(s): ${invalidFields.join(
+        ", "
+      )}`,
     });
   }
 
@@ -214,7 +223,6 @@ exports.deleteUser = async (req, res) => {
         role: deletedUser.role,
       },
     });
-
   } catch (error) {
     res.status(500).json({
       status: false,
@@ -276,11 +284,11 @@ exports.forgotPassword = async (req, res) => {
       .digest("hex");
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpire = Date.now() + 60 * 60 * 1000; // 1 hour
+    user.resetPasswordExpire = Date.now() + 5 * 60 * 1000; // 5 minutes
     await user.save();
 
     // Create reset URL
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `http://${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
     // Email content
     const html = `
@@ -333,52 +341,61 @@ exports.resetPassword = async (req, res) => {
       console.log("Missing fields");
       return res.status(400).json({
         status: false,
-        message: 'All fields are required'
+        message: "All fields are required",
       });
     }
 
     if (newPassword !== confirmPassword) {
       return res.status(400).json({
         status: false,
-        message: 'New password and confirm password do not match'
+        message: "New password and confirm password do not match",
       });
     }
 
     // 2. Hash token
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     // 3. Find user with token and expiry
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
-      resetPasswordExpire: { $gt: Date.now() }
+      resetPasswordExpire: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.status(400).json({
         status: false,
-        message: 'Invalid or expired token'
+        message: "Invalid or expired token",
       });
     }
 
     // 4. Update password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+    console.log("Resetting password for:", user.email);
+    console.log("Raw password to be hashed by middleware:", newPassword);
+
+    user.password = newPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
-    await user.save();
-    
+    await user
+      .save()
+      .then(() => {
+        console.log("User saved successfully");
+      })
+      .catch((err) => {
+        console.error("Error saving user:", err);
+      });
+
     // 5. Success response
     return res.status(200).json({
       status: true,
-      message: 'Password has been reset successfully...'
+      message: "Password has been reset successfully...",
     });
-
   } catch (err) {
-    console.error('Reset Password Error:', err);
+    console.error("Reset Password Error:", err);
     return res.status(500).json({
       status: false,
-      message: 'Something went wrong'
+      message: "Something went wrong",
     });
   }
 };
