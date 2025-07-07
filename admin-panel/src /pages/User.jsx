@@ -5,6 +5,7 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [editingUserId, setEditingUserId] = useState(null);
   const [newRole, setNewRole] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // FETCH USER
   const fetchUsers = async () => {
@@ -80,11 +81,32 @@ export default function Users() {
     }
   };
 
+  // FILTER USER
+  const filteredUsers = users.filter((user) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(query) ||
+      user.email?.toLowerCase().includes(query) ||
+      user.role?.toLowerCase().includes(query) ||
+      user.loginType?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-7 underline text-center">
         User Management
       </h2>
+
+      <div className="mb-5 text-center">
+        <input
+          type="text"
+          placeholder="Search by name, email, role, or login type..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+        />
+      </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
@@ -99,17 +121,17 @@ export default function Users() {
             </tr>
           </thead>
           <tbody>
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <tr>
                 <td
                   colSpan="6"
                   className="p-4 text-center text-gray-500 dark:text-gray-400"
                 >
-                  No users found.
+                  Users Not Found.
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
+              filteredUsers.map((user) => (
                 <tr
                   key={user._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
@@ -127,7 +149,9 @@ export default function Users() {
                     {user.loginType}
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {new Date(user.createdAt).toLocaleString()}
+                    {new Date(user.createdAt)
+                      .toLocaleString()
+                      .replace(",", " , ")}
                   </td>
                   <td className="p-3 border dark:border-gray-600">
                     {/* Edit Role Button */}

@@ -12,6 +12,7 @@ export default function Playlists() {
     selectedAlbums: [],
   });
   const [editId, setEditId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -131,16 +132,39 @@ export default function Playlists() {
     fetchAlbums();
   }, []);
 
+  // FILTER PLAYLIST
+  const filteredPlaylists = playlists.filter((playlist) => {
+    const query = searchQuery.toLowerCase();
+  
+    return (
+      playlist.title.toLowerCase().includes(query) ||
+      playlist.description.toLowerCase().includes(query) ||
+      playlist.albums.some((album) => album.title.toLowerCase().includes(query))
+    );
+  });  
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-7">
-        <h2 className="text-2xl font-semibold underline">Playlist Management</h2>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-2xl font-semibold underline">
+          Playlist Management
+        </h2>
         <button
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
           onClick={openAddForm}
         >
           + Playlist
         </button>
+      </div>
+
+      <div className="mb-5 text-center">
+        <input
+          type="text"
+          placeholder="Search by title, description, or album title..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+        />
       </div>
 
       <div className="overflow-x-auto">
@@ -156,17 +180,17 @@ export default function Playlists() {
             </tr>
           </thead>
           <tbody>
-            {playlists.length === 0 ? (
+            {filteredPlaylists.length === 0 ? (
               <tr>
                 <td
                   colSpan="6"
                   className="p-4 text-center text-gray-500 dark:text-gray-400"
                 >
-                  No playlists found.
+                  Playlists Not Found.
                 </td>
               </tr>
             ) : (
-              playlists.map((playlist) => (
+              filteredPlaylists.map((playlist) => (
                 <tr
                   key={playlist._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
@@ -218,8 +242,8 @@ export default function Playlists() {
       {/* Playlist Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96">
-            <h2 className="text-xl font-semibold mb-4 text-center text-purple-500">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96 border border-purple-800">
+            <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
               {editId ? "Update Playlist" : "Add Playlist"}
             </h2>
             <form onSubmit={handleFormSubmit}>

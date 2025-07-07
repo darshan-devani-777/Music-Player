@@ -11,6 +11,7 @@ export default function Albums() {
     albumImage: null,
   });
   const [editId, setEditId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -98,9 +99,26 @@ export default function Albums() {
     fetchAlbums();
   }, []);
 
+  // FILTER ALBUM
+  const filteredAlbums = albums.filter((album) => {
+    const query = searchQuery.toLowerCase();
+
+    const releaseDateObj = new Date(album.releaseDate);
+    const day = releaseDateObj.getDate().toString().padStart(2, "0");
+    const month = (releaseDateObj.getMonth() + 1).toString().padStart(2, "0");
+    const year = releaseDateObj.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
+
+    return (
+      album.title.toLowerCase().includes(query) ||
+      album.artist.toLowerCase().includes(query) ||
+      formattedDate.includes(query)
+    );
+  });
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-7">
+      <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-semibold underline">Album Management</h2>
         <button
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
@@ -108,6 +126,16 @@ export default function Albums() {
         >
           + Album
         </button>
+      </div>
+
+      <div className="mb-6 text-center">
+        <input
+          type="text"
+          placeholder="Search by title, artist, or release date..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+        />
       </div>
 
       <div className="overflow-x-auto">
@@ -124,17 +152,17 @@ export default function Albums() {
             </tr>
           </thead>
           <tbody>
-            {albums.length === 0 ? (
+            {filteredAlbums.length === 0 ? (
               <tr>
                 <td
                   colSpan="7"
                   className="p-4 text-center text-gray-500 dark:text-gray-400"
                 >
-                  No albums found.
+                  Albums Not Found.
                 </td>
               </tr>
             ) : (
-              albums.map((album) => (
+              filteredAlbums.map((album) => (
                 <tr
                   key={album._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
@@ -191,8 +219,8 @@ export default function Albums() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96">
-            <h2 className="text-xl font-semibold mb-4 text-center text-purple-500">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96 border border-purple-800">
+            <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
               {editId ? "Update Album" : "Add Album"}
             </h2>
             <form onSubmit={handleFormSubmit}>

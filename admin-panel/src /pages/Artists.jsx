@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "../api/axios"; 
+import api from "../api/axios";
 
 export default function Artists() {
   const [artists, setArtists] = useState([]);
@@ -10,18 +10,16 @@ export default function Artists() {
     artistImage: null,
   });
   const [editId, setEditId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const token = localStorage.getItem("token");
 
   // FETCH ARTIST
   const fetchArtists = async () => {
     try {
-      const res = await api.get(
-        "auth/artist/get-all-artist",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await api.get("auth/artist/get-all-artist", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setArtists(res.data.data);
     } catch (err) {
       alert("Failed to fetch artists");
@@ -32,12 +30,9 @@ export default function Artists() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this artist?")) return;
     try {
-      await api.delete(
-        `auth/artist/delete-artist/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await api.delete(`auth/artist/delete-artist/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       fetchArtists();
     } catch (err) {
       alert("Failed to delete artist");
@@ -60,28 +55,20 @@ export default function Artists() {
     try {
       if (editId) {
         // Update artist
-        await api.put(
-          `auth/artist/update-artist/${editId}`,
-          data,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        await api.put(`auth/artist/update-artist/${editId}`, data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
       } else {
         // Create artist
-        await api.post(
-          "auth/artist/create-artist",
-          data,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        await api.post("auth/artist/create-artist", data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
       }
 
       fetchArtists();
@@ -114,9 +101,18 @@ export default function Artists() {
     fetchArtists();
   }, []);
 
+  // FILTER ARTIST
+  const filteredArtists = artists.filter((artist) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      artist.name?.toLowerCase().includes(query) ||
+      artist.bio?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-7">
+      <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-semibold underline">Artist Management</h2>
         <button
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
@@ -124,6 +120,16 @@ export default function Artists() {
         >
           + Artist
         </button>
+      </div>
+
+      <div className="mb-6 text-center">
+        <input
+          type="text"
+          placeholder="Search by name or bio..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+        />
       </div>
 
       {/* Artist Table */}
@@ -139,17 +145,17 @@ export default function Artists() {
             </tr>
           </thead>
           <tbody>
-            {artists.length === 0 ? (
+            {filteredArtists.length === 0 ? (
               <tr>
                 <td
                   colSpan="5"
                   className="p-4 text-center text-gray-500 dark:text-gray-400"
                 >
-                  No artists found.
+                  Artists Not Found.
                 </td>
               </tr>
             ) : (
-              artists.map((artist) => (
+              filteredArtists.map((artist) => (
                 <tr
                   key={artist._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
@@ -198,8 +204,8 @@ export default function Artists() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96">
-            <h2 className="text-xl font-semibold mb-4 text-center text-purple-500">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96 border border-purple-800">
+            <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
               {editId ? "Update Artist" : "Add Artist"}
             </h2>
             <form onSubmit={handleFormSubmit}>
