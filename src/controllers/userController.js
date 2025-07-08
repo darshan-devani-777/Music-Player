@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 require("dotenv").config();
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
@@ -396,6 +397,32 @@ exports.resetPassword = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: "Something went wrong",
+    });
+  }
+};
+
+// GUEST TOKEN
+exports.generateGuestToken = async (req, res) => {
+  try {
+    const payload = {
+      name: "Guest",
+      role: "guest",
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "10m",
+    });
+
+    res.status(200).json({
+      status: true,
+      message: "Guest token generated successfully...",
+      token,
+    });
+  } catch (error) {
+    console.error("Guest token error:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to generate guest token",
     });
   }
 };

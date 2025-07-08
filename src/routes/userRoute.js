@@ -66,4 +66,7 @@ router.post(
   authController.resetPassword
 );
 
+// GUEST TOKEN ROUTE (Public)
+router.get("/users/guest-access", authController.generateGuestToken);
+
 module.exports = router;
