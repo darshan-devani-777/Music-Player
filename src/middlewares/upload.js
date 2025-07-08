@@ -2,7 +2,6 @@ const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../utils/cloudinary");
 
-// CLOUDINARY
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -11,6 +10,7 @@ const storage = new CloudinaryStorage({
     if (file.fieldname === "artistImage") folder = "music-app/artists";
     else if (file.fieldname === "albumImage") folder = "music-app/albums";
     else if (file.fieldname === "playlistImage") folder = "music-app/playlists";
+    else if (file.fieldname === "genreImage") folder = "music-app/genres"; 
 
     return {
       folder,
@@ -21,5 +21,4 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage });
-
 module.exports = upload;

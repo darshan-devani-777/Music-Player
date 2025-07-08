@@ -13,6 +13,7 @@ import Users from "./pages/User";
 import Artists from "./pages/Artists";
 import Albums from "./pages/Albums";
 import Playlists from "./pages/Playlists";
+import Genres from "./pages/Genre";
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="artists" element={<Artists />} />
           <Route path="albums" element={<Albums />} />
           <Route path="playlists" element={<Playlists />} />
+          <Route path="genres" element={<Genres />} />
         </Route>
       </Routes>
     </BrowserRouter>

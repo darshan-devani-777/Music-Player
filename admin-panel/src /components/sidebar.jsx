@@ -48,6 +48,9 @@ export default function Sidebar() {
             <NavLink to="/playlists" className={linkClass}>
               Playlists
             </NavLink>
+            <NavLink to="/genres" className={linkClass}>
+              Genres
+            </NavLink>
           </nav>
         </div>
 

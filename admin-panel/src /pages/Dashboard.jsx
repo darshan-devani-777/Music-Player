@@ -7,6 +7,7 @@ export default function Dashboard() {
   const [artistCount, setArtistCount] = useState(0);
   const [playlistCount, setPlaylistCount] = useState(0);
   const [albumCount, setAlbumCount] = useState(0);
+  const [genreCount, setGenreCount] = useState(0);
 
   const navigate = useNavigate();
 
@@ -45,6 +46,13 @@ export default function Dashboard() {
         }
       );
       setAlbumCount(albumRes.data.data.length);
+      const genreRes = await axios.get(
+        "http://localhost:5000/api/auth/genre/get-all-genre",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setGenreCount(genreRes.data.data.length);
     } catch (err) {
       console.error("Error fetching data:", err);
       alert("Failed to fetch dashboard data");
@@ -93,6 +101,14 @@ export default function Dashboard() {
         >
           <h3 className="text-lg font-semibold">Playlists</h3>
           <p className="text-3xl">{playlistCount}</p>
+        </div>
+
+        <div
+          onClick={() => navigate("/genres")}
+          className="bg-yellow-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-yellow-600 cursor-pointer"
+        >
+          <h3 className="text-lg font-semibold">Genres</h3>
+          <p className="text-3xl">{genreCount}</p>
         </div>
       </div>
     </div>

@@ -181,7 +181,7 @@ export default function Albums() {
                       <img
                         src={album.albumImages[0]}
                         alt={album.title}
-                        className="w-16 h-16 object-cover rounded border-1 border-gray-600"
+                        className="w-16 h-16 object-cover rounded border"
                       />
                     ) : (
                       <span>No Image</span>

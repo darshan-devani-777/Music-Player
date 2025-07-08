@@ -31,13 +31,13 @@ router.post('/users/signup', signupValidation, validate, authController.signup);
 // LOGIN USER
 router.post('/users/login', loginValidation, validate, authController.login);
 
-// GET ALL USER
+// GET ALL USER (Admin)
 router.get("/users/get-all-user", authMiddleware , isAdmin , authController.getAllUsers);
 
-// UPDATE USER ROLE
+// UPDATE USER ROLE (Admin)
 router.patch("/users/update-role/:userId/", authMiddleware, isAdmin, authController.updateUserRole);
 
-// DELETE USER
+// DELETE USER (Admin)
 router.delete("/users/delete-user/:id", authMiddleware , isAdmin , authController.deleteUser);
 
 // GOOGLE LOGIN

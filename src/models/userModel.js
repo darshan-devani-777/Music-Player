@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpire: Date,
 }, { timestamps: true });
 
-// 🔐 PRE-SAVE MIDDLEWARE 
+// PRE-SAVE MIDDLEWARE 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 

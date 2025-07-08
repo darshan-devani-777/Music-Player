@@ -8,6 +8,7 @@ const userRoutes = require('./src/routes/userRoute');
 const albumRoute = require("./src/routes/albumRoute");
 const artistRoutes = require("./src/routes/artistRoute");
 const playlistRoutes = require("./src/routes/playlistRoute");
+const genreRoutes = require("./src/routes/genreRoute");
 
 const app = express();
 connectDB();
@@ -32,6 +33,7 @@ app.use('/api/auth', userRoutes);
 app.use("/api/auth", albumRoute);
 app.use("/api/auth", artistRoutes);
 app.use("/api/auth", playlistRoutes);
+app.use("/api/auth", genreRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server Start At http://localhost:${PORT}`));

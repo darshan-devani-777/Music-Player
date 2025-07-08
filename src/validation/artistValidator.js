@@ -25,7 +25,7 @@ exports.updateArtistValidation = [
     .withMessage("Bio is required if provided"),
 
     body("artistImage").custom((value, { req }) => {
-      // Only require files if artistImage is not a string URL
+      // string URL
       if (value && !value.startsWith("http")) {
         if (!req.files || req.files.length === 0) {
           throw new Error("At least one artist image is required.");
