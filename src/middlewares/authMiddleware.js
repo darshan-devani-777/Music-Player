@@ -13,16 +13,18 @@ const authMiddleware = async (req, res, next) => {
 
   const token = authHeader.split(" ")[1];
 
+  const decodedUnverified = jwt.decode(token);
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // If guest token
+    // Guest Token Handling
     if (decoded.role === "guest") {
       req.user = { role: "guest", name: "Guest" };
       return next();
     }
 
-    // For normal users
+    // Logged in User Handling
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(401).json({
@@ -32,19 +34,25 @@ const authMiddleware = async (req, res, next) => {
     }
 
     req.user = user;
-    next();
-
+    return next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.status(401).json({
-        status: false,
-        message: "10 minutes is over. Please generate guest token again.",
-      });
+      if (decodedUnverified?.role === "guest") {
+        return res.status(401).json({
+          status: false,
+          message: "3 days is over. Please generate guest token again.",
+        });
+      } else {
+        return res.status(401).json({
+          status: false,
+          message: "Token expired. Please login again.",
+        });
+      }
     }
 
     return res.status(401).json({
       status: false,
-      message: "Unauthorized: Invalid or expired token",
+      message: "Unauthorized: Invalid token",
     });
   }
 };

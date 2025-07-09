@@ -409,14 +409,14 @@ exports.generateGuestToken = async (req, res) => {
       role: "guest",
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "10m",
+    const guestToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "3d",
     });
 
     res.status(200).json({
       status: true,
       message: "Guest token generated successfully...",
-      token,
+      guestToken,
     });
   } catch (error) {
     console.error("Guest token error:", error);

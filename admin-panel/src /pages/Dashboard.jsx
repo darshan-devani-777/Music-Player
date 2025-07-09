@@ -11,6 +11,7 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
 
+  // FETCH DATA
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -105,7 +106,7 @@ export default function Dashboard() {
 
         <div
           onClick={() => navigate("/genres")}
-          className="bg-yellow-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-yellow-600 cursor-pointer"
+          className="bg-cyan-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-cyan-600 cursor-pointer"
         >
           <h3 className="text-lg font-semibold">Genres</h3>
           <p className="text-3xl">{genreCount}</p>
