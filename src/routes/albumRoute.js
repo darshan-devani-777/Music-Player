@@ -31,14 +31,14 @@ router.post(
   albumController.createAlbum
 );
 
-// GET ALL ALBUMS (Admin/User)
+// GET ALL ALBUMS (Admin / User)
 router.get(
   "/album/get-all-album",
   authMiddleware,
   albumController.getAllAlbums
 );
 
-// GET NEW RELEASED ALBUMS
+// GET NEW RELEASED ALBUMS (Admin / User)
 router.get(
   "/album/new-released-album",
   authMiddleware,

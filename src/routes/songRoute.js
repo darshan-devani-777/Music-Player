@@ -28,6 +28,9 @@ router.post("/song/create-song", authMiddleware , isAdmin , validateCreateSong ,
 // GET ALL SONG (Admin / User)
 router.get("/song/get-all-song", authMiddleware , controller.getAllSongs);
 
+// GET NEW RELEASED SONGS (Admin / User)
+router.get("/song/new-released-song", authMiddleware , controller.getNewReleasedSongs);
+
 // GET SPECIFIC SONG (Admin)
 router.get("/song/get-specific-song/:id", authMiddleware , isAdmin , controller.getSongById);
 

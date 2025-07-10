@@ -116,6 +116,29 @@ exports.getAllSongs = async (req, res) => {
   }
 };
 
+// GET NEWLY RELEASED SONG
+exports.getNewReleasedSongs = async (req, res) => {
+  try {
+    const newSongs = await Song.find()
+      .populate("artistId albumId genreId")
+      .populate("uploadedBy", "_id name email")
+      .sort({ createdAt: -1 }) 
+      .limit(4); 
+
+    res.status(200).json({
+      success: true,
+      message: "Newly Released Songs Retrieved Successfully...",
+      data: newSongs,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
+  }
+};
+
 // GET SPECIFIC SONG
 exports.getSongById = async (req, res) => {
   try {
