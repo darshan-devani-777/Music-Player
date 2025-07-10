@@ -14,6 +14,7 @@ import Artists from "./pages/Artists";
 import Albums from "./pages/Albums";
 import Playlists from "./pages/Playlists";
 import Genres from "./pages/Genre";
+import Song from "./pages/Song";
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="albums" element={<Albums />} />
           <Route path="playlists" element={<Playlists />} />
           <Route path="genres" element={<Genres />} />
+          <Route path="songs" element={<Song />} />
         </Route>
       </Routes>
     </BrowserRouter>

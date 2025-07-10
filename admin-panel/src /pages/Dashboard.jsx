@@ -8,6 +8,7 @@ export default function Dashboard() {
   const [playlistCount, setPlaylistCount] = useState(0);
   const [albumCount, setAlbumCount] = useState(0);
   const [genreCount, setGenreCount] = useState(0);
+  const [songCount, setSongCount] = useState(0);
 
   const navigate = useNavigate();
 
@@ -47,6 +48,7 @@ export default function Dashboard() {
         }
       );
       setAlbumCount(albumRes.data.data.length);
+
       const genreRes = await axios.get(
         "http://localhost:5000/api/auth/genre/get-all-genre",
         {
@@ -54,6 +56,15 @@ export default function Dashboard() {
         }
       );
       setGenreCount(genreRes.data.data.length);
+
+      const songRes = await axios.get(
+        "http://localhost:5000/api/auth/song/get-all-song",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setSongCount(songRes.data.data.length);
+
     } catch (err) {
       console.error("Error fetching data:", err);
       alert("Failed to fetch dashboard data");
@@ -71,7 +82,7 @@ export default function Dashboard() {
       </h2>
 
       {/* Cards with navigation */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
           onClick={() => navigate("/users")}
           className="bg-blue-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-blue-600 cursor-pointer"
@@ -110,6 +121,14 @@ export default function Dashboard() {
         >
           <h3 className="text-lg font-semibold">Genres</h3>
           <p className="text-3xl">{genreCount}</p>
+        </div>
+
+        <div
+          onClick={() => navigate("/songs")}
+          className="bg-gray-400 text-white p-6 rounded-lg shadow-md dark:hover:bg-gray-500 cursor-pointer"
+        >
+          <h3 className="text-lg font-semibold">Songs</h3>
+          <p className="text-3xl">{songCount}</p>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ export default function Sidebar() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const linkClass = ({ isActive }) =>
-    `px-4 py-2 rounded text-sm font-medium transition ${
+    `px-4 py-1 rounded text-sm font-medium transition ${
       isActive
         ? "bg-purple-600 text-white shadow"
         : "text-gray-300 hover:bg-gray-600 hover:text-white"
@@ -22,17 +22,21 @@ export default function Sidebar() {
 
           {/* Admin Info */}
           {user ? (
-            <div className="mb-8 p-4 rounded-md bg-gray-800 border border-purple-500 shadow-md space-y-1">
-              <p className="text-lg font-semibold text-purple-300 truncate">{user.name}</p>
+            <div className="p-4 rounded-md bg-gray-800 border border-purple-500 shadow-md space-y-1">
+              <p className="text-lg font-semibold text-purple-300 truncate">
+                {user.name}
+              </p>
               <p className="text-sm text-gray-400 truncate">{user.email}</p>
-              <p className="text-sm text-green-400">Role: <span className="capitalize">{user.role}</span></p>
+              <p className="text-sm text-green-400">
+                Role: <span className="capitalize">{user.role}</span>
+              </p>
             </div>
           ) : (
             <div className="text-gray-400 mb-6">No user found</div>
           )}
 
           {/* Navigation Links */}
-          <nav className="flex flex-col gap-3">
+          <nav className="flex flex-col gap-3 my-10">
             <NavLink to="/dashboard" end className={linkClass}>
               Dashboard
             </NavLink>
@@ -51,12 +55,15 @@ export default function Sidebar() {
             <NavLink to="/genres" className={linkClass}>
               Genres
             </NavLink>
+            <NavLink to="/songs" className={linkClass}>
+              Songs
+            </NavLink>
           </nav>
         </div>
 
         {/* Logout Button */}
         <button
-          className="bg-red-500 hover:bg-red-700 transition duration-300 text-white px-4 py-2 rounded shadow cursor-pointer w-full"
+          className="bg-red-500 hover:bg-red-700 transition duration-300 text-white px-4 py-2 rounded shadow cursor-pointer w-full mt-6"
           onClick={() => {
             localStorage.removeItem("token");
             localStorage.removeItem("user");
@@ -68,7 +75,7 @@ export default function Sidebar() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 ml-64 p-6 bg-gray-100 min-h-screen overflow-hidden">
+      <main className="flex-1 ml-64 p-6 bg-gray-100 min-h-screen overflow-y-auto">
         <Outlet />
       </main>
     </div>
