@@ -192,16 +192,16 @@ export default function Songs() {
                   <td className="p-3 border dark:border-gray-600 text-white">
                     {song.title}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-300">
+                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {song.duration}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-300">
+                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {song.artistId?.name}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-300">
+                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {song.albumId?.title}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-300">
+                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {song.genreId?.name}
                   </td>
                   <td className="p-3 border dark:border-gray-600 space-x-2">
