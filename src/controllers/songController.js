@@ -155,24 +155,53 @@ exports.updateSong = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
+    const updates = {};
+    let hasChanges = false;
+
+    // Check genreId update
     const oldGenreId = song.genreId?.toString();
     const newGenreId = req.body.genreId;
 
-    // Update genre
     if (newGenreId && newGenreId !== oldGenreId) {
+      // Remove from old genre
       if (oldGenreId) {
         await Genre.findByIdAndUpdate(oldGenreId, {
           $pull: { songs: song._id },
         });
       }
+
+      // Add to new genre
       await Genre.findByIdAndUpdate(newGenreId, {
         $addToSet: { songs: song._id },
       });
-      song.genreId = newGenreId;
+
+      updates.genreId = newGenreId;
+      hasChanges = true;
     }
 
-    // Update other fields
-    Object.assign(song, req.body);
+    // Check other fields
+    const fieldsToCheck = ["title", "duration", "fileUrl", "artistId", "albumId"];
+
+    fieldsToCheck.forEach((field) => {
+      const oldValue = song[field]?.toString();
+      const newValue = req.body[field];
+
+      if (newValue && newValue !== oldValue) {
+        updates[field] = newValue;
+        hasChanges = true;
+      }
+    });
+
+    if (!hasChanges) {
+      return res.status(200).json({
+        success: true,
+        message: "No changes detected. Song already up to date.",
+        data: song,
+      });
+    }
+
+    // Apply updates
+    Object.assign(song, updates);
     await song.save();
 
     const updatedSong = await Song.findById(song._id)
@@ -192,6 +221,7 @@ exports.updateSong = async (req, res) => {
     });
   }
 };
+
 
 // DELETE SONG
 exports.deleteSong = async (req, res) => {

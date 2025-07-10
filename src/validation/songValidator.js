@@ -10,9 +10,9 @@ const songFields = [
     .notEmpty()
     .withMessage("Duration is required"),
 
-  body("cloudinaryUrl")
+  body("fileUrl")
     .notEmpty()
-    .withMessage("Cloudinary URL is required"),
+    .withMessage("File URL is required"),
 
   body("artistId")
     .notEmpty()
@@ -25,10 +25,6 @@ const songFields = [
   body("genreId")
     .notEmpty()
     .withMessage("Genre ID is required"),
-
-  body("uploadedBy")
-    .notEmpty()
-    .withMessage("Uploader ID is required"),
 ];
 
 // CREATE SONG 
@@ -38,7 +34,7 @@ exports.validateCreateSong = [...songFields];
 exports.validateUpdateSong = [
   body("title").optional().notEmpty().withMessage("Title cannot be empty"),
   body("duration").optional().notEmpty().withMessage("Duration cannot be empty"),
-  body("cloudinaryUrl").optional().notEmpty().withMessage("Cloudinary URL cannot be empty"),
+  body("fileUrl").optional().notEmpty().withMessage("File URL cannot be empty"),
   body("artistId").optional().notEmpty().withMessage("Artist ID cannot be empty"),
   body("albumId").optional().notEmpty().withMessage("Album ID cannot be empty"),
   body("genreId").optional().notEmpty().withMessage("Genre ID cannot be empty"),
