@@ -16,9 +16,7 @@ exports.createAlbum = async (req, res) => {
     }
 
     const parsedDate = new Date(releaseDate);
-    console.log("Parsed releaseDate:", parsedDate);
-
-    const imageUrls = req.files.map(file => file.path);
+    const imageUrls = req.files.map((file) => file.path);
 
     const album = new Album({
       title,
@@ -29,14 +27,16 @@ exports.createAlbum = async (req, res) => {
     });
 
     const savedAlbum = await album.save();
-    const populatedAlbum = await savedAlbum.populate("createdBy", "_id name email");
+    const populatedAlbum = await savedAlbum.populate(
+      "createdBy",
+      "_id name email"
+    );
 
     res.status(201).json({
       status: "success",
       message: "Album Created Successfully...",
       data: populatedAlbum,
     });
-
   } catch (err) {
     console.error("Error creating album:", err.message);
     res.status(500).json({
@@ -49,7 +49,9 @@ exports.createAlbum = async (req, res) => {
 // GET ALL ALBUM
 exports.getAllAlbums = async (req, res) => {
   try {
-    const albums = await Album.find().populate("createdBy", "_id name email");
+    const albums = await Album.find()
+      .populate("createdBy", "_id name email")
+      .populate("songs");
 
     res.status(200).json({
       status: "success",
@@ -58,7 +60,9 @@ exports.getAllAlbums = async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching albums:", err.message);
-    res.status(500).json({ status: "error", message: "Failed to fetch albums" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to fetch albums" });
   }
 };
 
@@ -66,9 +70,10 @@ exports.getAllAlbums = async (req, res) => {
 exports.getNewReleasedAlbums = async (req, res) => {
   try {
     const albums = await Album.find()
-      .sort({ releaseDate: -1 }) 
-      .limit(4) 
-      .populate("createdBy", "_id name email");
+      .sort({ releaseDate: -1 })
+      .limit(4)
+      .populate("createdBy", "_id name email")
+      .populate("songs");
 
     res.status(200).json({
       status: "success",
@@ -77,14 +82,18 @@ exports.getNewReleasedAlbums = async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching new albums:", err.message);
-    res.status(500).json({ status: "error", message: "Failed to fetch albums" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to fetch albums" });
   }
 };
 
 // GET SPECIFIC ALBUM
 exports.getAlbumById = async (req, res) => {
   try {
-    const album = await Album.findById(req.params.id).populate("createdBy", "_id name email");
+    const album = await Album.findById(req.params.id)
+      .populate("createdBy", "_id name email")
+      .populate("songs");
 
     if (!album) {
       return res.status(404).json({
@@ -100,7 +109,11 @@ exports.getAlbumById = async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching album:", err.message);
-    res.status(500).json({ status: "error", message: "Failed to fetch album" });
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch album",
+      error: err.message,
+    });
   }
 };
 
@@ -119,14 +132,16 @@ exports.updateAlbum = async (req, res) => {
     }
 
     if (req.files && req.files.length > 0) {
-      updatedFields.albumImages = req.files.map(file => file.path);
+      updatedFields.albumImages = req.files.map((file) => file.path);
     }
 
     const updatedAlbum = await Album.findByIdAndUpdate(
       req.params.id,
       updatedFields,
       { new: true, runValidators: true }
-    ).populate("createdBy", "_id name email");
+    )
+      .populate("createdBy", "_id name email")
+      .populate("songs");
 
     if (!updatedAlbum) {
       return res.status(404).json({
@@ -144,7 +159,7 @@ exports.updateAlbum = async (req, res) => {
     console.error("Error updating album:", err.message);
 
     if (err.name === "ValidationError") {
-      const messages = Object.values(err.errors).map(e => e.message);
+      const messages = Object.values(err.errors).map((e) => e.message);
       return res.status(400).json({
         status: "error",
         message: "Validation failed",
@@ -162,7 +177,10 @@ exports.updateAlbum = async (req, res) => {
 // DELETE ALBUM
 exports.deleteAlbum = async (req, res) => {
   try {
-    const deletedAlbum = await Album.findByIdAndDelete(req.params.id).populate("createdBy", "_id name email");
+    const deletedAlbum = await Album.findByIdAndDelete(req.params.id).populate(
+      "createdBy",
+      "_id name email"
+    );
 
     if (!deletedAlbum) {
       return res.status(404).json({
@@ -178,12 +196,8 @@ exports.deleteAlbum = async (req, res) => {
     });
   } catch (err) {
     console.error("Error deleting album:", err.message);
-    res.status(500).json({ status: "error", message: "Failed to delete album" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to delete album" });
   }
 };
-
-
-
-
-
-

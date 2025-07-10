@@ -19,6 +19,12 @@ const playlistSchema = new mongoose.Schema({
       ref: "Album",
     }
   ],
+  songs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Song", 
+    }
+  ],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

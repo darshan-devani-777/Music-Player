@@ -21,6 +21,12 @@ const genreSchema = new mongoose.Schema({
       message: "At least one genre image is required",
     },
   },
+  songs: [ 
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Song",
+    },
+  ],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

@@ -6,7 +6,9 @@ exports.createArtist = async (req, res) => {
     const { name, bio } = req.body;
     const userId = req.user._id;
 
-    const existingArtist = await Artist.findOne({ name: { $regex: `^${name}$`, $options: 'i' } });
+    const existingArtist = await Artist.findOne({
+      name: { $regex: `^${name}$`, $options: "i" },
+    });
     if (existingArtist) {
       return res.status(400).json({
         status: "error",
@@ -14,7 +16,7 @@ exports.createArtist = async (req, res) => {
       });
     }
 
-    const imageUrls = req.files.map(file => file.path); 
+    const imageUrls = req.files.map((file) => file.path);
 
     const artist = new Artist({
       name,
@@ -24,17 +26,21 @@ exports.createArtist = async (req, res) => {
     });
 
     const savedArtist = await artist.save();
-    const populatedArtist = await savedArtist.populate("createdBy", "_id name email role");
+    const populatedArtist = await savedArtist.populate(
+      "createdBy",
+      "_id name email role"
+    );
 
     res.status(201).json({
       status: "success",
       message: "Artist Created Successfully...",
       data: populatedArtist,
     });
-
   } catch (err) {
     console.error("Error creating artist:", err.message);
-    res.status(500).json({ status: "error", message: "Failed to create artist" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to create artist" });
   }
 };
 
@@ -59,7 +65,10 @@ exports.getAllArtists = async (req, res) => {
 // GET SPECIFIC ARTIST
 exports.getArtistById = async (req, res) => {
   try {
-    const artist = await Artist.findById(req.params.id).populate("createdBy", "name email");
+    const artist = await Artist.findById(req.params.id).populate(
+      "createdBy",
+      "name email"
+    );
 
     if (!artist) {
       return res.status(404).json({
@@ -90,7 +99,7 @@ exports.updateArtist = async (req, res) => {
     if (name !== undefined) updatedFields.name = name;
     if (bio !== undefined) updatedFields.bio = bio;
     if (req.files && req.files.length > 0) {
-      updatedFields.artistImage = req.files.map(file => file.path);
+      updatedFields.artistImage = req.files.map((file) => file.path);
     }
 
     const updatedArtist = await Artist.findByIdAndUpdate(
@@ -115,12 +124,11 @@ exports.updateArtist = async (req, res) => {
       message: "Artist Updated Successfully...",
       data: updatedArtist,
     });
-
   } catch (err) {
     console.error("Error updating artist:", err.message);
 
     if (err.name === "ValidationError") {
-      const errorMessages = Object.values(err.errors).map(e => e.message);
+      const errorMessages = Object.values(err.errors).map((e) => e.message);
       return res.status(400).json({
         status: "error",
         message: errorMessages[0],
@@ -137,7 +145,10 @@ exports.updateArtist = async (req, res) => {
 // DELETE ARTIST
 exports.deleteArtist = async (req, res) => {
   try {
-    const deleted = await Artist.findByIdAndDelete(req.params.id).populate("createdBy", "_id name email");
+    const deleted = await Artist.findByIdAndDelete(req.params.id).populate(
+      "createdBy",
+      "_id name email"
+    );
     if (!deleted) {
       return res.status(404).json({
         status: "error",

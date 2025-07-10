@@ -1,14 +1,16 @@
 const Playlist = require("../models/playlistModel");
 const Album = require("../models/albumModel");
+const Song = require("../models/songModel");
 
 // CREATE PLAYLIST
 exports.createPlaylist = async (req, res) => {
   try {
-    const { title, description, albums } = req.body;
+    const { title, description, albums, songs } = req.body;
     const userId = req.user._id;
 
     const imageUrls = req.files.map((file) => file.path);
 
+    // Album IDs
     let albumIds = [];
     if (albums) {
       if (typeof albums === "string") {
@@ -18,21 +20,31 @@ exports.createPlaylist = async (req, res) => {
       }
     }
 
+    // Song IDs
+    let songIds = [];
+    if (songs) {
+      if (typeof songs === "string") {
+        songIds = songs.split(",").map((id) => id.trim());
+      } else if (Array.isArray(songs)) {
+        songIds = songs;
+      }
+    }
+
     const playlist = new Playlist({
       title,
       description,
       playlistImage: imageUrls,
       albums: albumIds,
+      songs: songIds,
       createdBy: userId,
     });
 
     const savedPlaylist = await playlist.save();
+
     const populatedPlaylist = await Playlist.findById(savedPlaylist._id)
       .populate("createdBy", "_id name email")
-      .populate({
-        path: "albums",
-        select: "_id title artist releaseDate albumImages",
-      });
+      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("songs");
 
     res.status(201).json({
       status: "success",
@@ -52,8 +64,9 @@ exports.createPlaylist = async (req, res) => {
 exports.getAllPlaylists = async (req, res) => {
   try {
     const playlists = await Playlist.find()
-      .populate("createdBy", "name email")
-      .populate("albums");
+      .populate("createdBy", "_id name email")
+      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("songs");
 
     res.status(200).json({
       status: "success",
@@ -72,8 +85,9 @@ exports.getAllPlaylists = async (req, res) => {
 exports.getPlaylistById = async (req, res) => {
   try {
     const playlist = await Playlist.findById(req.params.id)
-      .populate("createdBy", "name email")
-      .populate("albums");
+      .populate("createdBy", "_id name email")
+      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("songs");
 
     if (!playlist) {
       return res.status(404).json({
@@ -98,19 +112,20 @@ exports.getPlaylistById = async (req, res) => {
 // UPDATE PLAYLIST
 exports.updatePlaylist = async (req, res) => {
   try {
-    const { title, description, albums } = req.body;
-    let updatedFields = {};
+    const { title, description, albums, songs } = req.body;
+    const updatedFields = {};
 
     if (title) updatedFields.title = title;
     if (description) updatedFields.description = description;
 
+    // Image update
     if (req.files && req.files.length > 0) {
-      updatedFields.playlistImage = req.files.map((file) => file.path); 
+      updatedFields.playlistImage = req.files.map((file) => file.path);
     }
 
+    // Albums update
     if (albums) {
       let albumIds = [];
-
       if (typeof albums === "string") {
         albumIds = albums.split(",").map((id) => id.trim());
       } else if (Array.isArray(albums)) {
@@ -128,13 +143,34 @@ exports.updatePlaylist = async (req, res) => {
       updatedFields.albums = albumIds;
     }
 
+    // Songs update
+    if (songs) {
+      let songIds = [];
+      if (typeof songs === "string") {
+        songIds = songs.split(",").map((id) => id.trim());
+      } else if (Array.isArray(songs)) {
+        songIds = songs;
+      }
+
+      const validSongs = await Song.find({ _id: { $in: songIds } });
+      if (validSongs.length !== songIds.length) {
+        return res.status(400).json({
+          status: "error",
+          message: "One or more song IDs are invalid.",
+        });
+      }
+
+      updatedFields.songs = songIds;
+    }
+
     const updatedPlaylist = await Playlist.findByIdAndUpdate(
       req.params.id,
       updatedFields,
       { new: true }
     )
       .populate("createdBy", "_id name email")
-      .populate("albums", "_id title artist releaseDate albumImages");
+      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("songs");
 
     if (!updatedPlaylist) {
       return res.status(404).json({
@@ -153,7 +189,7 @@ exports.updatePlaylist = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: err.message || "Failed to update playlist",
-    });;
+    });
   }
 };
 
@@ -161,8 +197,9 @@ exports.updatePlaylist = async (req, res) => {
 exports.deletePlaylist = async (req, res) => {
   try {
     const deleted = await Playlist.findByIdAndDelete(req.params.id)
-     .populate("createdBy", "_id name email")
-     .populate("albums");
+      .populate("createdBy", "_id name email")
+      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("songs");
 
     if (!deleted) {
       return res.status(404).json({

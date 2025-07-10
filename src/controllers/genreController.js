@@ -50,17 +50,25 @@ exports.getAllGenres = async (req, res) => {
   try {
     const genres = await Genre.find()
       .sort({ createdAt: -1 })
-      .populate("createdBy", "_id name email");
+      .populate("createdBy", "_id name email")
+      .populate({
+        path: "songs",
+        populate: [
+          { path: "artistId" },
+          { path: "albumId" },
+          { path: "uploadedBy", select: "name email" },
+        ],
+      });
 
     return res.status(200).json({
       success: true,
-      message: "Genres Fetched Successfully...",
+      message: "Genres with all songs fetched successfully....",
       data: genres,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Error fetching genres",
+      message: "Failed to fetch genres.",
       error: error.message,
     });
   }
@@ -69,10 +77,16 @@ exports.getAllGenres = async (req, res) => {
 // GET SPECIFIC GENRE
 exports.getGenreById = async (req, res) => {
   try {
-    const genre = await Genre.findById(req.params.id).populate(
-      "createdBy",
-      "_id name email"
-    );
+    const genre = await Genre.findById(req.params.id)
+      .populate("createdBy", "_id name email")
+      .populate({
+        path: "songs",
+        populate: [
+          { path: "artistId" },
+          { path: "albumId" },
+          { path: "uploadedBy", select: "name email" },
+        ],
+      });
 
     if (!genre) {
       return res.status(404).json({
@@ -112,7 +126,6 @@ exports.updateGenre = async (req, res) => {
       ...req.body,
     };
 
-    // If new images uploaded, replace old ones
     if (req.files && req.files.length > 0) {
       updatedFields.genreImage = req.files.map((file) => file.path);
     }
@@ -120,7 +133,16 @@ exports.updateGenre = async (req, res) => {
     const updatedGenre = await Genre.findByIdAndUpdate(id, updatedFields, {
       new: true,
       runValidators: true,
-    }).populate("createdBy", "_id name email");
+    })
+      .populate("createdBy", "_id name email")
+      .populate({
+        path: "songs",
+        populate: [
+          { path: "artistId" },
+          { path: "albumId" },
+          { path: "uploadedBy", select: "name email" },
+        ],
+      });
 
     return res.status(200).json({
       success: true,
