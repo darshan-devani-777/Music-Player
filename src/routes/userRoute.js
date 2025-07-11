@@ -67,7 +67,7 @@ router.get(
   '/google', 
   passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// GOOGLE CALLBACK
+// GOOGLE CALLBACK (Public)
 router.get(
   '/google/callback',
   passport.authenticate('google', { session: false }),
