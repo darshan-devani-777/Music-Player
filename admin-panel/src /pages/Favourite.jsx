@@ -137,7 +137,7 @@ export default function Favourites() {
             setAllFavourites([]);
             setSongFavourites([]);
             setUserFavourites([]);
-            setUserId(""); // clear input
+            setUserId(""); 
           }}
           className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
             activeTab === "user"
@@ -156,7 +156,7 @@ export default function Favourites() {
             setAllFavourites([]);
             setUserFavourites([]);
             setSongFavourites([]);
-            setSongId(""); // clear input
+            setSongId(""); 
           }}
           className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
             activeTab === "song"

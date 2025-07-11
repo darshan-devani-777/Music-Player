@@ -149,7 +149,7 @@ export default function Albums() {
 
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-          <thead>
+          <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
               <th className="p-3 border dark:border-gray-600">Image</th>
               <th className="p-3 border dark:border-gray-600">Title</th>
