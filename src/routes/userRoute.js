@@ -8,7 +8,8 @@ const {
   signupValidation,
   loginValidation,
   forgotPasswordValidation,
-  resetPasswordValidation
+  resetPasswordValidation,
+  updateUserValidation
 } = require("../validation/userValidator");
 const { validationResult } = require("express-validator");
 
@@ -25,23 +26,46 @@ const validate = (req, res, next) => {
   next();
 };
 
-// SIGNUP USER
-router.post('/users/signup', signupValidation, validate, authController.signup);
+// SIGNUP USER (Public)
+router.post(
+  '/users/signup', 
+  signupValidation, 
+  validate, 
+  authController.signup);
 
-// LOGIN USER
-router.post('/users/login', loginValidation, validate, authController.login);
+// LOGIN USER (Public)
+router.post(
+  '/users/login', 
+  loginValidation, 
+  validate, 
+  authController.login);
 
 // GET ALL USER (Admin)
-router.get("/users/get-all-user", authMiddleware , isAdmin , authController.getAllUsers);
+router.get(
+  "/users/get-all-user", 
+  authMiddleware , 
+  isAdmin , 
+  authController.getAllUsers);
 
-// UPDATE USER ROLE (Admin)
-router.patch("/users/update-role/:userId/", authMiddleware, isAdmin, authController.updateUserRole);
+// UPDATE USER (Admin / User)
+router.put(
+  "/users/update-user/:userId/", 
+  authMiddleware, 
+  updateUserValidation , 
+  validate , 
+  authController.updateUser);
 
 // DELETE USER (Admin)
-router.delete("/users/delete-user/:id", authMiddleware , isAdmin , authController.deleteUser);
+router.delete(
+  "/users/delete-user/:id", 
+  authMiddleware , 
+  isAdmin , 
+  authController.deleteUser);
 
-// GOOGLE LOGIN
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+// GOOGLE LOGIN (Public)
+router.get(
+  '/google', 
+  passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 // GOOGLE CALLBACK
 router.get(
@@ -50,7 +74,7 @@ router.get(
   authController.googleSignup
 );
 
-// FORGOT PASSWORD
+// FORGOT PASSWORD (Public)
 router.post(
   '/admins/forgot-password',
   forgotPasswordValidation,
@@ -58,7 +82,7 @@ router.post(
   authController.forgotPassword
 );
 
-// RESET PASSWORD
+// RESET PASSWORD (Public)
 router.post(
   '/admins/reset-password',
   resetPasswordValidation,
@@ -67,6 +91,8 @@ router.post(
 );
 
 // GUEST TOKEN ROUTE (Public)
-router.get("/users/guest-access", authController.generateGuestToken);
+router.get(
+  "/users/guest-access", 
+  authController.generateGuestToken);
 
 module.exports = router;

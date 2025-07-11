@@ -141,37 +141,12 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// UPDATE USER ROLE
-exports.updateUserRole = async (req, res) => {
+// UPDATE USER
+exports.updateUser = async (req, res) => {
   const { userId } = req.params;
-  const allowedFields = ["role"];
-  const sentFields = Object.keys(req.body);
-
-  const invalidFields = sentFields.filter(
-    (field) => !allowedFields.includes(field)
-  );
-
-  if (invalidFields.length > 0) {
-    return res.status(400).json({
-      status: false,
-      message: `Only 'role' field is allowed to update. Invalid field(s): ${invalidFields.join(
-        ", "
-      )}`,
-    });
-  }
-
-  const { role } = req.body;
-
-  if (!["user", "admin"].includes(role)) {
-    return res.status(400).json({
-      status: false,
-      message: "Invalid role. Allowed roles are 'user' or 'admin'.",
-    });
-  }
 
   try {
     const user = await User.findById(userId);
-
     if (!user) {
       return res.status(404).json({
         status: false,
@@ -179,12 +154,17 @@ exports.updateUserRole = async (req, res) => {
       });
     }
 
-    user.role = role;
+    ["name", "email", "role"].forEach((field) => {
+      if (req.body[field]) {
+        user[field] = req.body[field];
+      }
+    });
+
     await user.save();
 
     res.json({
       status: true,
-      message: "User Role Updated Successfully...",
+      message: "User updated successfully...",
       data: {
         _id: user._id,
         name: user.name,

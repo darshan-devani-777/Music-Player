@@ -27,6 +27,64 @@ exports.loginValidation = [
     .notEmpty().withMessage("Password is required")
 ];
 
+// UPDATE USER
+exports.updateUserValidation = [
+  (req, res, next) => {
+    const currentUser = req.user; 
+    const sentFields = Object.keys(req.body);
+
+    if (currentUser.role === "admin") {
+      const allowedFields = ["role"];
+      const invalidFields = sentFields.filter(
+        (field) => !allowedFields.includes(field)
+      );
+
+      if (invalidFields.length > 0) {
+        return res.status(400).json({
+          status: false,
+          message: `Admin can only update 'role'. Invalid field(s): ${invalidFields.join(", ")}`,
+        });
+      }
+    } else {
+      // normal user
+      if (currentUser._id.toString() !== req.params.userId.toString()) {
+        return res.status(403).json({
+          status: false,
+          message: "You are not allowed to update other users",
+        });
+      }      
+
+      const allowedFields = ["name", "email"];
+      const invalidFields = sentFields.filter(
+        (field) => !allowedFields.includes(field)
+      );
+
+      if (invalidFields.length > 0) {
+        return res.status(400).json({
+          status: false,
+          message: `You can only update 'name' or 'email'. Invalid field(s): ${invalidFields.join(", ")}`,
+        });
+      }
+    }
+
+    next();
+  },
+
+  body("name")
+    .optional()
+    .notEmpty().withMessage("Name cannot be empty"),
+
+  body("email")
+    .optional()
+    .notEmpty().withMessage("Email cannot be empty")
+    .isEmail().withMessage("Invalid email format"),
+
+  body("role")
+    .optional()
+    .notEmpty().withMessage("Role cannot be empty")
+    .isIn(["user", "admin"]).withMessage("Role must be either 'user' or 'admin'")
+];
+
 // FORGOT PASSWORD
 exports.forgotPasswordValidation = [
   body("email")
