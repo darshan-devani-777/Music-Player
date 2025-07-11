@@ -15,6 +15,7 @@ import Albums from "./pages/Albums";
 import Playlists from "./pages/Playlists";
 import Genres from "./pages/Genre";
 import Song from "./pages/Song";
+import Favourite from "./pages/Favourite";
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="playlists" element={<Playlists />} />
           <Route path="genres" element={<Genres />} />
           <Route path="songs" element={<Song />} />
+          <Route path="favourites" element={<Favourite />} />
         </Route>
       </Routes>
     </BrowserRouter>

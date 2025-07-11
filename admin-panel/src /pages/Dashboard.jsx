@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [albumCount, setAlbumCount] = useState(0);
   const [genreCount, setGenreCount] = useState(0);
   const [songCount, setSongCount] = useState(0);
+  const [favouriteCount, setFavouriteCount] = useState(0);
 
   const navigate = useNavigate();
 
@@ -65,6 +66,15 @@ export default function Dashboard() {
       );
       setSongCount(songRes.data.data.length);
 
+      const favouriteRes = await axios.get(
+        "http://localhost:5000/api/auth/favourite/get-all-favourite",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log("Favourite Response:", favouriteRes.data);
+
+      setFavouriteCount(favouriteRes.data.favourites.length);
     } catch (err) {
       console.error("Error fetching data:", err);
       alert("Failed to fetch dashboard data");
@@ -83,52 +93,67 @@ export default function Dashboard() {
 
       {/* Cards with navigation */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Users */}
         <div
           onClick={() => navigate("/users")}
-          className="bg-blue-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-blue-600 cursor-pointer"
+          className="bg-blue-500 text-white p-6 rounded-lg shadow-md hover:bg-blue-600 cursor-pointer"
         >
           <h3 className="text-lg font-semibold">Users</h3>
           <p className="text-3xl">{userCount}</p>
         </div>
 
+        {/* Artists */}
         <div
           onClick={() => navigate("/artists")}
-          className="bg-green-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-green-600 cursor-pointer"
+          className="bg-green-500 text-white p-6 rounded-lg shadow-md hover:bg-green-600 cursor-pointer"
         >
           <h3 className="text-lg font-semibold">Artists</h3>
           <p className="text-3xl">{artistCount}</p>
         </div>
 
+        {/* Albums */}
         <div
           onClick={() => navigate("/albums")}
-          className="bg-red-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-red-700 cursor-pointer"
+          className="bg-red-600 text-white p-6 rounded-lg shadow-md hover:bg-red-700 cursor-pointer"
         >
           <h3 className="text-lg font-semibold">Albums</h3>
           <p className="text-3xl">{albumCount}</p>
         </div>
 
+        {/* Playlists */}
         <div
           onClick={() => navigate("/playlists")}
-          className="bg-yellow-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-yellow-600 cursor-pointer"
+          className="bg-yellow-500 text-white p-6 rounded-lg shadow-md hover:bg-yellow-600 cursor-pointer"
         >
           <h3 className="text-lg font-semibold">Playlists</h3>
           <p className="text-3xl">{playlistCount}</p>
         </div>
 
+        {/* Genres */}
         <div
           onClick={() => navigate("/genres")}
-          className="bg-cyan-500 text-white p-6 rounded-lg shadow-md dark:hover:bg-cyan-600 cursor-pointer"
+          className="bg-purple-500 text-white p-6 rounded-lg shadow-md hover:bg-purple-600 cursor-pointer"
         >
           <h3 className="text-lg font-semibold">Genres</h3>
           <p className="text-3xl">{genreCount}</p>
         </div>
 
+        {/* Songs */}
         <div
           onClick={() => navigate("/songs")}
-          className="bg-gray-400 text-white p-6 rounded-lg shadow-md dark:hover:bg-gray-500 cursor-pointer"
+          className="bg-pink-500 text-white p-6 rounded-lg shadow-md hover:bg-pink-600 cursor-pointer"
         >
           <h3 className="text-lg font-semibold">Songs</h3>
           <p className="text-3xl">{songCount}</p>
+        </div>
+
+        {/* Favourites */}
+        <div
+          onClick={() => navigate("/favourites")}
+          className="bg-indigo-600 text-white p-6 rounded-lg shadow-md hover:bg-indigo-700 cursor-pointer"
+        >
+          <h3 className="text-lg font-semibold">Favourites</h3>
+          <p className="text-3xl">{favouriteCount}</p>
         </div>
       </div>
     </div>
