@@ -150,7 +150,7 @@ export default function Songs() {
           placeholder="Search by title or artist..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded dark:bg-gray-800 dark:text-white"
+          className="w-full max-w-md px-4 py-2 border rounded dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
         />
       </div>
 
