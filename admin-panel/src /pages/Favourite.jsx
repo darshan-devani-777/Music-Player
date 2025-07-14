@@ -137,7 +137,7 @@ export default function Favourites() {
             setAllFavourites([]);
             setSongFavourites([]);
             setUserFavourites([]);
-            setUserId(""); 
+            setUserId("");
           }}
           className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
             activeTab === "user"
@@ -156,7 +156,7 @@ export default function Favourites() {
             setAllFavourites([]);
             setUserFavourites([]);
             setSongFavourites([]);
-            setSongId(""); 
+            setSongId("");
           }}
           className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
             activeTab === "song"
@@ -255,7 +255,14 @@ export default function Favourites() {
                     {item.user?.email || "—"}
                   </td>
                   <td className="p-3 border border-gray-700">
-                    {new Date(item.createdAt).toLocaleDateString()}
+                    {new Date(item.createdAt).toLocaleString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
                   </td>
                 </tr>
               ))
