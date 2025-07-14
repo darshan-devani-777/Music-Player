@@ -123,9 +123,7 @@ export default function Genres() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-2xl font-semibold underline">
-          Genre Management
-        </h2>
+        <h2 className="text-2xl font-semibold underline">Genre Management</h2>
         <button
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
           onClick={openAddForm}
@@ -133,7 +131,7 @@ export default function Genres() {
           + Genre
         </button>
       </div>
-  
+
       <div className="mb-5 text-center">
         <input
           type="text"
@@ -143,9 +141,9 @@ export default function Genres() {
           className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
         />
       </div>
-  
+
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+        <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
               <th className="p-3 border dark:border-gray-600">Image</th>
@@ -210,7 +208,7 @@ export default function Genres() {
             )}
           </tbody>
         </table>
-  
+
         {totalPages > 1 && (
           <div className="flex justify-center mt-4 gap-2">
             {Array.from({ length: totalPages }, (_, i) => (
@@ -229,7 +227,7 @@ export default function Genres() {
           </div>
         )}
       </div>
-  
+
       {/* Genre Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -280,7 +278,7 @@ export default function Genres() {
                   }
                 />
               </div>
-  
+
               <div className="flex justify-between">
                 <button
                   type="submit"
@@ -301,5 +299,5 @@ export default function Genres() {
         </div>
       )}
     </div>
-  );  
+  );
 }
