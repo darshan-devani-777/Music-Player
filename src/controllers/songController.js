@@ -19,12 +19,12 @@ exports.createSong = async (req, res) => {
       });
     }
 
-    // Download file from URL
+    // Download audio file from fileUrl
     const file = await axios.get(fileUrl, { responseType: "arraybuffer" });
     const buffer = Buffer.from(file.data, "binary");
 
-    // Upload to Cloudinary
-    const result = await new Promise((resolve, reject) => {
+    // Upload audio file to Cloudinary
+    const audioUpload = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           resource_type: "video",
@@ -32,7 +32,7 @@ exports.createSong = async (req, res) => {
         },
         (err, result) => {
           if (err) {
-            console.error("Cloudinary Upload Error:", err);
+            console.error("Cloudinary Audio Upload Error:", err);
             return reject(err);
           }
           resolve(result);
@@ -41,41 +41,46 @@ exports.createSong = async (req, res) => {
       streamifier.createReadStream(buffer).pipe(stream);
     });
 
-    // Format duration
+    // Format duration if number
     let formattedDuration = duration;
     if (typeof duration === "number") {
       formattedDuration = formatDuration(duration);
     }
 
+    let songImage = [];
+    if (req.files && req.files.length > 0) {
+      songImage = req.files.map((file) => file.path); 
+    }
+
+    // Create song
     const song = await Song.create({
       title,
       duration: formattedDuration,
       artistId,
       albumId,
+      genreId,
       uploadedBy: userId,
-      cloudinaryUrl: result.secure_url,
+      cloudinaryUrl: audioUpload.secure_url,
+      songImage, 
     });
 
-    // Add song to Album's
-    await Album.findByIdAndUpdate(albumId, {
-      $push: { songs: song._id },
-    });
+    // Add song to Album
+    await Album.findByIdAndUpdate(albumId, { $push: { songs: song._id } });
 
-    // Add song to Genre's
+    // Add song to Genre
     if (genreId) {
-      await Genre.findByIdAndUpdate(genreId, {
-        $push: { songs: song._id },
-      });
+      await Genre.findByIdAndUpdate(genreId, { $push: { songs: song._id } });
     }
 
     const populatedSong = await Song.findById(song._id)
       .populate("uploadedBy", "name email")
       .populate("artistId")
-      .populate("albumId");
+      .populate("albumId")
+      .populate("genreId");
 
     res.status(201).json({
       success: true,
-      message: "Song Uploaded Successfully and added to album and genre.",
+      message: "Song Uploaded Successfully with images.",
       data: populatedSong,
     });
   } catch (err) {
@@ -174,6 +179,7 @@ exports.updateSong = async (req, res) => {
         .json({ success: false, message: "Song not found" });
     }
 
+    // Permission check
     if (song.uploadedBy.toString() !== req.user.id) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
@@ -181,7 +187,7 @@ exports.updateSong = async (req, res) => {
     const updates = {};
     let hasChanges = false;
 
-    // Check genreId update
+    // Check for genreId update
     const oldGenreId = song.genreId?.toString();
     const newGenreId = req.body.genreId;
 
@@ -215,6 +221,16 @@ exports.updateSong = async (req, res) => {
       }
     });
 
+    // Handle new songImages if uploaded
+    if (req.files && req.files.length > 0) {
+      const newImageUrls = req.files.map((file) => file.path); 
+      if (!song.songImage) {
+        song.songImage = [];
+      }
+      song.songImage.push(...newImageUrls); 
+      hasChanges = true;
+    }
+
     if (!hasChanges) {
       return res.status(200).json({
         success: true,
@@ -237,6 +253,7 @@ exports.updateSong = async (req, res) => {
       data: updatedSong,
     });
   } catch (err) {
+    console.error("Song Update Error:", err);
     res.status(500).json({
       success: false,
       message: "Server error",

@@ -13,6 +13,17 @@ const songSchema = new mongoose.Schema({
     type: String,
     required: [true, "Cloudinary URL is required"],
   },
+  songImage: {
+    type: [String],
+    validate: {
+      validator: function (val) {
+        return Array.isArray(val) && val.length > 0;
+      },
+      message: "At least one song image is required.",
+    },
+    required: [true, "Song images are required."],
+    default: [],
+  },  
   artistId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Artist",
