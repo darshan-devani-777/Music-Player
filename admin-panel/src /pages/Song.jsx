@@ -21,6 +21,7 @@ export default function Songs() {
   const songsPerPage = 7;
   const token = localStorage.getItem("token");
 
+  // FETCH SONG
   const fetchSongs = async () => {
     try {
       const res = await api.get("auth/song/get-all-song", {
@@ -32,6 +33,7 @@ export default function Songs() {
     }
   };
 
+  // UPDATE / CREATE SONG
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     const updatedData = {
@@ -70,6 +72,7 @@ export default function Songs() {
     }
   };
 
+  // OPEN ADD FORM
   const openAddForm = () => {
     setEditId(null);
     setFormData({
@@ -84,6 +87,7 @@ export default function Songs() {
     setShowForm(true);
   };
 
+  // OPEN EDIT FORM
   const openEditForm = (song) => {
     setEditId(song._id);
     setFormData({
@@ -98,6 +102,7 @@ export default function Songs() {
     setShowForm(true);
   };
 
+  // DELETE SONG
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this song?")) return;
     try {

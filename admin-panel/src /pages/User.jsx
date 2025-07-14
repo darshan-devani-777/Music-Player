@@ -38,8 +38,8 @@ export default function Users() {
 
     try {
       const token = localStorage.getItem("token");
-      await api.patch(
-        `/auth/users/update-role/${userId}`,
+      await api.put(
+        `/auth/users/update-user/${userId}`,
         {
           role: newRole,
         },
