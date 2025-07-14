@@ -35,6 +35,7 @@ exports.validateUpdateSong = [
   body("title").optional().notEmpty().withMessage("Title cannot be empty"),
   body("duration").optional().notEmpty().withMessage("Duration cannot be empty"),
   body("fileUrl").optional().notEmpty().withMessage("File URL cannot be empty"),
+  body("songImage").optional().notEmpty().withMessage("Song Image cannot be empty"),
   body("artistId").optional().notEmpty().withMessage("Artist ID cannot be empty"),
   body("albumId").optional().notEmpty().withMessage("Album ID cannot be empty"),
   body("genreId").optional().notEmpty().withMessage("Genre ID cannot be empty"),
