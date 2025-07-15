@@ -8,9 +8,11 @@ exports.signupValidation = [
     .notEmpty().withMessage("Email is required")
     .isEmail().withMessage("Invalid email format"),
 
-  body("password")
+    body("password")
     .notEmpty().withMessage("Password is required")
-    .isLength({ min: 6 }).withMessage("Password must be at least 6 characters long"),
+    .isLength({ min: 6 }).withMessage("Password must be at least 6 characters long")
+    .matches(/[!@#$%^&*(),.?":{}|<>]/).withMessage("Password must contain at least one special character")
+    .matches(/^[A-Z]/).withMessage("Password must start with a capital letter"),  
 
   body("role")
     .notEmpty().withMessage("Role is required")
