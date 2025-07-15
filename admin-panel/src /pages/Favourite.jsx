@@ -226,6 +226,7 @@ export default function Favourites() {
         <table className="w-full text-sm text-left border border-gray-700 rounded-lg overflow-hidden">
           <thead className="bg-gray-800 text-white uppercase text-xs">
             <tr>
+              <th className="p-3 border dark:border-gray-600">ID</th>
               <th className="p-3 border border-gray-700">Song</th>
               <th className="p-3 border border-gray-700">User</th>
               <th className="p-3 border border-gray-700">Email</th>
@@ -243,8 +244,11 @@ export default function Favourites() {
                 </td>
               </tr>
             ) : (
-              currentList.map((item) => (
+              currentList.map((item, index) => (
                 <tr key={item._id} className="hover:bg-gray-800 transition">
+                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                    {(currentPage - 1) * perPage + index + 1}.
+                  </td>
                   <td className="p-3 border border-gray-700">
                     {item.song?.title || "—"}
                   </td>

@@ -164,6 +164,7 @@ export default function Songs() {
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
+              <th className="p-3 border dark:border-gray-600">ID</th>
               <th className="p-3 border dark:border-gray-600">Image</th>
               <th className="p-3 border dark:border-gray-600">Title</th>
               <th className="p-3 border dark:border-gray-600">Duration</th>
@@ -184,11 +185,14 @@ export default function Songs() {
                 </td>
               </tr>
             ) : (
-              currentSongs.map((song) => (
+              currentSongs.map((song, index) => (
                 <tr
                   key={song._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
                 >
+                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                    {(currentPage - 1) * songsPerPage + index + 1}.
+                  </td>
                   <td className="p-3 border dark:border-gray-600">
                     {song.songImage?.[0] && (
                       <img

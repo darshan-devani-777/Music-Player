@@ -125,6 +125,7 @@ export default function Users() {
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
+              <th className="p-3 border dark:border-gray-600">ID</th>
               <th className="p-3 border dark:border-gray-600">Name</th>
               <th className="p-3 border dark:border-gray-600">Email</th>
               <th className="p-3 border dark:border-gray-600">Role</th>
@@ -144,11 +145,14 @@ export default function Users() {
                 </td>
               </tr>
             ) : (
-              currentUsers.map((user) => (
+              currentUsers.map((user, index) => (
                 <tr
                   key={user._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
                 >
+                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                    {(currentPage - 1) * usersPerPage + index + 1}.
+                  </td>
                   <td className="p-3 border dark:border-gray-600 text-white">
                     {user.name}
                   </td>
@@ -231,7 +235,7 @@ export default function Users() {
               const isNearCurrent = Math.abs(currentPage - page) <= 1;
 
               if (
-                totalPages <= 4 || 
+                totalPages <= 3 ||
                 isFirst ||
                 isLast ||
                 isCurrent ||

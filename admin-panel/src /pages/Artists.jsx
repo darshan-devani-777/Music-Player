@@ -148,6 +148,7 @@ export default function Artists() {
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
+              <th className="p-3 border dark:border-gray-600">ID</th>
               <th className="p-3 border dark:border-gray-600">Image</th>
               <th className="p-3 border dark:border-gray-600">Name</th>
               <th className="p-3 border dark:border-gray-600">Bio</th>
@@ -166,11 +167,14 @@ export default function Artists() {
                 </td>
               </tr>
             ) : (
-              currentArtists.map((artist) => (
+              currentArtists.map((artist, index) => (
                 <tr
                   key={artist._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
                 >
+                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                    {(currentPage - 1) * artistsPerPage + index + 1}.
+                  </td>
                   <td className="p-3 border dark:border-gray-600">
                     {artist.artistImage.length > 0 ? (
                       <img
@@ -191,7 +195,7 @@ export default function Artists() {
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {artist.createdBy?.name || "Unknown"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600">
+                  <td className="p-3 border dark:border-gray-600  whitespace-nowrap">
                     <button
                       className="bg-blue-500 text-white text-sm px-3 py-1 rounded mr-2 hover:bg-blue-700 transition duration-300 cursor-pointer"
                       onClick={() => openEditForm(artist)}

@@ -146,6 +146,7 @@ export default function Genres() {
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
+              <th className="p-3 border dark:border-gray-600">ID</th>
               <th className="p-3 border dark:border-gray-600">Image</th>
               <th className="p-3 border dark:border-gray-600">Name</th>
               <th className="p-3 border dark:border-gray-600">Description</th>
@@ -164,11 +165,14 @@ export default function Genres() {
                 </td>
               </tr>
             ) : (
-              currentGenres.map((genre) => (
+              currentGenres.map((genre, index) => (
                 <tr
                   key={genre._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
                 >
+                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                    {(currentPage - 1) * genresPerPage + index + 1}.
+                  </td>
                   <td className="p-3 border dark:border-gray-600">
                     {genre.genreImage?.[0] ? (
                       <img

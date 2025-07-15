@@ -181,6 +181,7 @@ export default function Playlists() {
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
+              <th className="p-3 border dark:border-gray-600">ID</th>
               <th className="p-3 border dark:border-gray-600">Image</th>
               <th className="p-3 border dark:border-gray-600">Title</th>
               <th className="p-3 border dark:border-gray-600">Description</th>
@@ -200,11 +201,14 @@ export default function Playlists() {
                 </td>
               </tr>
             ) : (
-              currentPlaylists.map((playlist) => (
+              currentPlaylists.map((playlist, index) => (
                 <tr
                   key={playlist._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
                 >
+                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                    {(currentPage - 1) * playlistsPerPage + index + 1}.
+                  </td>{" "}
                   <td className="p-3 border dark:border-gray-600">
                     {playlist.playlistImage.length > 0 ? (
                       <img

@@ -151,6 +151,7 @@ export default function Albums() {
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
+            <th className="p-3 border dark:border-gray-600">ID</th>
               <th className="p-3 border dark:border-gray-600">Image</th>
               <th className="p-3 border dark:border-gray-600">Title</th>
               <th className="p-3 border dark:border-gray-600">Artist</th>
@@ -171,11 +172,14 @@ export default function Albums() {
                 </td>
               </tr>
             ) : (
-              currentAlbums.map((album) => (
+              currentAlbums.map((album , index) => (
                 <tr
                   key={album._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
                 >
+                   <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                    {(currentPage - 1) * albumsPerPage + index + 1}.
+                  </td>
                   <td className="p-3 border dark:border-gray-600">
                     {album.albumImages.length > 0 ? (
                       <img
