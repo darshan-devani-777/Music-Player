@@ -223,19 +223,48 @@ export default function Users() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-4 space-x-2">
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => handlePageChange(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1
-                    ? "bg-purple-600 text-white cursor-pointer transition duration-300"
-                    : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
-                } hover:bg-purple-700 transition`}
-              >
-                {i + 1}
-              </button>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => {
+              const page = i + 1;
+              const isFirst = page === 1;
+              const isLast = page === totalPages;
+              const isCurrent = page === currentPage;
+              const isNearCurrent = Math.abs(currentPage - page) <= 1;
+
+              if (
+                totalPages <= 4 || 
+                isFirst ||
+                isLast ||
+                isCurrent ||
+                isNearCurrent
+              ) {
+                return (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 rounded ${
+                      isCurrent
+                        ? "bg-purple-600 text-white cursor-pointer transition duration-300"
+                        : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
+                    } hover:bg-purple-700 transition`}
+                  >
+                    {page}
+                  </button>
+                );
+              }
+
+              if (
+                (page === currentPage - 2 && currentPage > 3) ||
+                (page === currentPage + 2 && currentPage < totalPages - 2)
+              ) {
+                return (
+                  <span key={page} className="py-2 text-gray-500">
+                    .....
+                  </span>
+                );
+              }
+
+              return null;
+            })}
           </div>
         )}
       </div>

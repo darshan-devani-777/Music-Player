@@ -225,19 +225,63 @@ export default function Albums() {
         </table>
         {totalPages > 1 && (
           <div className="flex justify-center mt-4 space-x-2">
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1
-                    ? "bg-purple-600 text-white cursor-pointer transition duration-300"
-                    : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
-                } hover:bg-purple-700 transition`}
-              >
-                {i + 1}
-              </button>
-            ))}
+            {(() => {
+              const pages = [];
+              let leftDotsShown = false;
+              let rightDotsShown = false;
+
+              for (let i = 1; i <= totalPages; i++) {
+                const isCurrent = currentPage === i;
+                const isFirstTwo = i === 1 || i === 2;
+                const isLastTwo = i === totalPages || i === totalPages - 1;
+                const isNearCurrent = Math.abs(currentPage - i) <= 1;
+
+                const shouldShow =
+                  totalPages <= 5 || isFirstTwo || isLastTwo || isNearCurrent;
+
+                if (shouldShow) {
+                  pages.push(
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i)}
+                      className={`px-3 py-1 rounded ${
+                        isCurrent
+                          ? "bg-purple-600 text-white cursor-pointer"
+                          : "bg-gray-700 text-gray-300 cursor-pointer"
+                      } hover:bg-purple-700 transition duration-300`}
+                    >
+                      {i}
+                    </button>
+                  );
+                } else if (!leftDotsShown && i < currentPage && i > 2) {
+                  pages.push(
+                    <span
+                      key={`dots-left-${i}`}
+                      className="px-3 py-1 text-gray-500"
+                    >
+                      ...
+                    </span>
+                  );
+                  leftDotsShown = true;
+                } else if (
+                  !rightDotsShown &&
+                  i > currentPage &&
+                  i < totalPages - 1
+                ) {
+                  pages.push(
+                    <span
+                      key={`dots-right-${i}`}
+                      className="px-3 py-1 text-gray-500"
+                    >
+                      ...
+                    </span>
+                  );
+                  rightDotsShown = true;
+                }
+              }
+
+              return pages;
+            })()}
           </div>
         )}
       </div>
