@@ -1,5 +1,6 @@
 const { body, check } = require("express-validator");
 
+// CREATE GENRE
 exports.createGenreValidator = [
   body("name")
     .notEmpty()
@@ -22,6 +23,7 @@ exports.createGenreValidator = [
     }),
 ];
 
+// UPDATE GENRE
 exports.updateGenreValidator = [
   body("name")
     .optional({ checkFalsy: false })

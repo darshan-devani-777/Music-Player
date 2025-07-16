@@ -3,7 +3,7 @@ const Album = require("../models/albumModel");
 // CREATE ALBUM
 exports.createAlbum = async (req, res) => {
   try {
-    const { title, artist, releaseDate } = req.body;
+    const { title, artistId, releaseDate } = req.body;
 
     const userId = req.user._id;
 
@@ -20,17 +20,16 @@ exports.createAlbum = async (req, res) => {
 
     const album = new Album({
       title,
-      artist,
+      artistId,
       releaseDate: parsedDate,
       albumImages: imageUrls,
       createdBy: userId,
     });
 
     const savedAlbum = await album.save();
-    const populatedAlbum = await savedAlbum.populate(
-      "createdBy",
-      "_id name email"
-    );
+    const populatedAlbum = await savedAlbum
+      .populate("createdBy", "_id name email")
+      .populate("artistId", "_id name bio artistImage");
 
     res.status(201).json({
       status: "success",
@@ -51,7 +50,8 @@ exports.getAllAlbums = async (req, res) => {
   try {
     const albums = await Album.find()
       .populate("createdBy", "_id name email")
-      .populate("songs");
+      .populate("songs")
+      .populate("artistId", "_id name bio artistImage");
 
     res.status(200).json({
       status: "success",
@@ -73,7 +73,8 @@ exports.getNewReleasedAlbums = async (req, res) => {
       .sort({ releaseDate: -1 })
       .limit(4)
       .populate("createdBy", "_id name email")
-      .populate("songs");
+      .populate("songs")
+      .populate("artistId", "_id name bio artistImage");
 
     res.status(200).json({
       status: "success",
@@ -93,7 +94,8 @@ exports.getAlbumById = async (req, res) => {
   try {
     const album = await Album.findById(req.params.id)
       .populate("createdBy", "_id name email")
-      .populate("songs");
+      .populate("songs")
+      .populate("artistId", "_id name bio artistImage");
 
     if (!album) {
       return res.status(404).json({
@@ -120,11 +122,12 @@ exports.getAlbumById = async (req, res) => {
 // UPDATE ALBUM
 exports.updateAlbum = async (req, res) => {
   try {
-    const { title, artist, releaseDate } = req.body;
+
+    const { title, artistId, releaseDate } = req.body;
     const updatedFields = {};
 
     if (title) updatedFields.title = title;
-    if (artist) updatedFields.artist = artist;
+    if (artistId) updatedFields.artistId = artistId;
 
     if (releaseDate) {
       const parsedDate = new Date(releaseDate);
@@ -141,7 +144,8 @@ exports.updateAlbum = async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate("createdBy", "_id name email")
-      .populate("songs");
+      .populate("songs")
+      .populate("artistId", "_id name bio artistImage");
 
     if (!updatedAlbum) {
       return res.status(404).json({

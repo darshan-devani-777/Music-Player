@@ -43,7 +43,7 @@ exports.createPlaylist = async (req, res) => {
 
     const populatedPlaylist = await Playlist.findById(savedPlaylist._id)
       .populate("createdBy", "_id name email")
-      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("albums", "_id title artistId releaseDate albumImages")
       .populate("songs");
 
     res.status(201).json({
@@ -65,7 +65,7 @@ exports.getAllPlaylists = async (req, res) => {
   try {
     const playlists = await Playlist.find()
       .populate("createdBy", "_id name email")
-      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("albums", "_id title artistId releaseDate albumImages")
       .populate("songs");
 
     res.status(200).json({
@@ -86,7 +86,7 @@ exports.getPlaylistById = async (req, res) => {
   try {
     const playlist = await Playlist.findById(req.params.id)
       .populate("createdBy", "_id name email")
-      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("albums", "_id title artistId releaseDate albumImages")
       .populate("songs");
 
     if (!playlist) {
@@ -169,7 +169,7 @@ exports.updatePlaylist = async (req, res) => {
       { new: true }
     )
       .populate("createdBy", "_id name email")
-      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("albums", "_id title artistId releaseDate albumImages")
       .populate("songs");
 
     if (!updatedPlaylist) {
@@ -198,7 +198,7 @@ exports.deletePlaylist = async (req, res) => {
   try {
     const deleted = await Playlist.findByIdAndDelete(req.params.id)
       .populate("createdBy", "_id name email")
-      .populate("albums", "_id title artist releaseDate albumImages")
+      .populate("albums", "_id title artistId releaseDate albumImages")
       .populate("songs");
 
     if (!deleted) {

@@ -7,11 +7,6 @@ const albumSchema = new mongoose.Schema(
       required: [true, "Album title is required"],
       trim: true,
     },
-    artist: {
-      type: String,
-      required: [true, "Artist name is required"],
-      trim: true,
-    },
     releaseDate: {
       type: Date,
       required: [true, "Release date is required"],
@@ -25,10 +20,16 @@ const albumSchema = new mongoose.Schema(
         message: "At least one album image is required",
       },
     },
+    artistId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Artist",
+      required: [true, "Artist ID is required"],
+    },       
     songs: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Song", 
+        required: [true, "Song ID is required"],
       },
     ],
     createdBy: {
