@@ -95,26 +95,6 @@ export default function Login() {
         <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition duration-300 cursor-pointer">
           Login
         </button>
-
-        {/* OR Divider */}
-        <div className="flex items-center my-4">
-          <div className="flex-grow border-t border-gray-600"></div>
-          <span className="mx-3 text-gray-400 text-sm">OR</span>
-          <div className="flex-grow border-t border-gray-600"></div>
-        </div>
-
-        {/* Google Sign-Up Button */}
-        <a
-          href="http://localhost:5000/api/auth/google"
-          className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 px-4 rounded-md border border-gray-300 shadow hover:bg-gray-100 hover:text-black transition duration-300"
-        >
-          <img
-            src="https://www.svgrepo.com/show/475656/google-color.svg"
-            alt="Google"
-            className="w-5 h-5"
-          />
-          <span className="font-semibold text-sm">Sign up with Google</span>
-        </a>
       </form>
     </div>
   );

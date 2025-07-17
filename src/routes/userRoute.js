@@ -95,4 +95,9 @@ router.get(
   "/users/guest-access", 
   authController.generateGuestToken);
 
+// GOOGLE LOGIN WITH TOKEN (Public)
+router.post(
+  "/verify-token", 
+  authController.googleLoginWithToken);
+
 module.exports = router;

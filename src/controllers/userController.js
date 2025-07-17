@@ -1,3 +1,4 @@
+const axios = require("axios");
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -74,6 +75,7 @@ exports.login = async (req, res) => {
     console.log("👤 User from DB:", user?.email);
     console.log("🔑 Stored hashed password:", user?.password);
     console.log("📝 Entered password:", password);
+    console.log("🔐 Login type:", user?.loginType || "manual");
 
     if (!user) {
       return res.status(400).json({
@@ -406,3 +408,42 @@ exports.generateGuestToken = async (req, res) => {
     });
   }
 };
+
+// GOOGLE LOGIN WITH TOKEN 
+exports.googleLoginWithToken = async (req, res) => {
+  const { access_token } = req.body;
+
+  console.log("📥 Received from frontend:", req.body);
+
+  if (!access_token) {
+    console.warn("No access token provided in request body");
+    return res.status(400).json({ error: "No access token provided" });
+  }
+
+  try {
+    // Use access token 
+    const googleRes = await axios.get(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
+
+    const { name, email, picture } = googleRes.data;
+
+    console.log("✅ Google user info:", { name, email, picture });
+
+    res.json({
+      name,
+      email,
+      picture,
+      access_token,
+    });
+  } catch (err) {
+    console.error("❌ Failed to verify token with Google:", err.response?.data || err.message);
+    res.status(401).json({ error: "Invalid access token" });
+  }
+};
+
