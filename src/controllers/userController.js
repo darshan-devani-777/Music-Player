@@ -409,41 +409,73 @@ exports.generateGuestToken = async (req, res) => {
   }
 };
 
-// GOOGLE LOGIN WITH TOKEN 
+// GOOGLE LOGIN WITH TOKEN
 exports.googleLoginWithToken = async (req, res) => {
   const { access_token } = req.body;
 
-  console.log("📥 Received from frontend:", req.body);
-
   if (!access_token) {
-    console.warn("No access token provided in request body");
     return res.status(400).json({ error: "No access token provided" });
   }
 
   try {
-    // Use access token 
-    const googleRes = await axios.get(
-      "https://www.googleapis.com/oauth2/v3/userinfo",
-      {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-      }
-    );
+    // Get user info from Google
+    const googleRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    });
 
     const { name, email, picture } = googleRes.data;
 
-    console.log("✅ Google user info:", { name, email, picture });
+    let user = await User.findOne({ email });
 
-    res.json({
+    if (user) {
+      if (user.loginType !== "google") {
+        return res.status(400).json({
+          error: `This email is already registered using ${user.loginType}. Please log in using that method.`,
+        });
+      }
+
+      return res.json({
+        accessToken: user.accessToken,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          picture: user.picture,
+          loginType: user.loginType,
+        },
+      });
+    }
+
+    const newUser = new User({
       name,
       email,
       picture,
-      access_token,
+      loginType: "google",
     });
+
+    const accessToken = generateAccessToken(newUser);
+    const refreshToken = generateRefreshToken(newUser);
+
+    newUser.accessToken = accessToken;
+    newUser.refreshToken = refreshToken;
+    await newUser.save();
+
+    return res.json({
+      accessToken,
+      refreshToken,
+      user: {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        picture: newUser.picture,
+        loginType: newUser.loginType,
+      },
+    });
+
   } catch (err) {
-    console.error("❌ Failed to verify token with Google:", err.response?.data || err.message);
+    console.error("Failed to verify token with Google:", err.response?.data || err.message);
     res.status(401).json({ error: "Invalid access token" });
   }
 };
-
