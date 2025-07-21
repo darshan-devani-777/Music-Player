@@ -49,7 +49,7 @@ export default function Register() {
         onSubmit={handleRegister}
         className="bg-gray-800 p-8 rounded-lg shadow-lg w-96 border border-purple-600"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center text-purple-400">
+        <h2 className="text-2xl font-bold mb-6 text-center text-purple-400 underline">
           Admin Register
         </h2>
 
