@@ -195,7 +195,7 @@ export default function Albums() {
                     {album.title}
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {album.artist}
+                    {album.artistId?.name}
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {new Date(album.releaseDate).toLocaleDateString()}
