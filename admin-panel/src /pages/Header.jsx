@@ -15,8 +15,8 @@ export default function Header() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <header className="flex justify-between items-center bg-gray-900 text-white px-8 py-4 shadow-md">
-      <h1 className="text-3xl font-bold text-purple-400 tracking-wide">
+    <header className="flex justify-between items-center bg-gray-800 text-white px-8 py-4 shadow-md">
+      <h1 className="text-3xl font-bold text-purple-400 tracking-wide underline">
         Admin Panel
       </h1>
 
