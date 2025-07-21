@@ -39,7 +39,7 @@ export default function ForgotPassword() {
           />
         </div>
 
-        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition duration-300">
+        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded transition duration-300 cursor-pointer">
           Send Reset Link
         </button>
 
