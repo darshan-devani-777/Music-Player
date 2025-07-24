@@ -115,7 +115,7 @@ export default function Albums() {
     const formattedDate = `${day}/${month}/${year}`;
     return (
       album.title.toLowerCase().includes(query) ||
-      album.artist.toLowerCase().includes(query) ||
+      album.artistId?.name.toLowerCase().includes(query) ||
       formattedDate.includes(query)
     );
   });
