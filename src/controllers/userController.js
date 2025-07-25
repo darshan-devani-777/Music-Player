@@ -12,6 +12,12 @@ exports.signup = async (req, res) => {
   const { name, email, password, role } = req.body;
 
   try {
+    console.log("👤 Register Attempt:");
+    console.log("Name:", name);
+    console.log("Email:", email);
+    console.log("Role:", role);
+    console.log("Password:", password);
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({

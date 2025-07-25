@@ -36,7 +36,7 @@ export default function Sidebar() {
           )}
 
           {/* Navigation Links */}
-          <nav className="flex flex-col gap-3 my-8">
+          <nav className="flex flex-col gap-3 mt-7">
             <NavLink to="/dashboard" end className={linkClass}>
               Dashboard
             </NavLink>
