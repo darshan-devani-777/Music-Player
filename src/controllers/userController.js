@@ -6,6 +6,7 @@ const crypto = require("crypto");
 require("dotenv").config();
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 const sendEmail = require("../utils/sendEmail");
+const { encryptData, decryptData } = require("../utils/crypto");
 
 // SIGNUP USER
 exports.signup = async (req, res) => {
@@ -26,6 +27,23 @@ exports.signup = async (req, res) => {
       });
     }
 
+    const userDetails = {
+      name,
+      email,
+      password,
+      role,
+      loginType: "local",
+    };
+
+    const { encryptedData, iv , key} = encryptData(userDetails);
+
+    console.log("🔐 Encrypted User Data:", encryptedData);
+    console.log("🧊 IV:", iv);
+
+    // Decrypt Data Verify
+    const decrypted = decryptData(encryptedData, iv);
+    console.log("✅ Decrypted Data:", decrypted);
+
     const newUser = await User.create({
       name,
       email,
@@ -38,12 +56,9 @@ exports.signup = async (req, res) => {
       status: true,
       message: "User Registered Successfully...",
       data: {
-        user: {
-          _id: newUser._id,
-          name: newUser.name,
-          email: newUser.email,
-          role: newUser.role,
-        },
+        encryptedUserData: encryptedData,
+        iv: iv,
+        key,
       },
     });
   } catch (err) {
@@ -77,12 +92,6 @@ exports.login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    console.log("🔐 Logging in with:", email);
-    console.log("👤 User from DB:", user?.email);
-    console.log("🔑 Stored hashed password:", user?.password);
-    console.log("📝 Entered password:", password);
-    console.log("🔐 Login type:", user?.loginType || "manual");
-
     if (!user) {
       return res.status(400).json({
         status: false,
@@ -90,13 +99,10 @@ exports.login = async (req, res) => {
       });
     }
 
-    if (user.loginType === "google") {
-      return res.status(400).json({
-        status: false,
-        message:
-          "This email is registered via Google. Please login using Google.",
-      });
-    }
+    console.log("👤 Login Attempt:");
+    console.log("📧 Email:", email);
+    console.log("📝 Entered password:", password);
+    console.log("🔑 Stored hashed password:", user?.password);
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -109,21 +115,39 @@ exports.login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    const userDetails = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      loginType: user.loginType || 'manual',
+    };
+
+    // Encrypt Data
+    const { encryptedData, iv , key} = encryptData(userDetails);
+
+    console.log("🔐 Encrypted User Data:", encryptedData);
+    console.log("🧊 IV:", iv);
+    console.log("🧊 KEY:", key);
+
+    // Decrypt Data Verify
+    const decrypted = decryptData(encryptedData, iv);
+    console.log("✅ Decrypted User Data:", decrypted);
+
+    // Send Response
     res.status(200).json({
       status: true,
       message: "User Login Successfully...",
       data: {
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+        encryptedUserData: encryptedData,
+        iv: iv,
+        key: key,
         accessToken,
         refreshToken,
       },
     });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({
       status: false,
       message: "Something went wrong",
@@ -162,25 +186,39 @@ exports.updateUser = async (req, res) => {
       });
     }
 
-    ["name", "email", "role"].forEach((field) => {
-      if (req.body[field]) {
-        user[field] = req.body[field];
-      }
-    });
+    const updatedUserDetails = {
+      name: req.body.name || user.name,
+      email: req.body.email || user.email,
+      role: req.body.role || user.role,
+      loginType: user.loginType,
+    };
+
+    const { encryptedData, iv , key} = encryptData(updatedUserDetails);
+
+    console.log("🔐 Encrypted User Data:", encryptedData);
+    console.log("🧊 IV:", iv);
+
+    const decrypted = decryptData(encryptedData, iv);
+    console.log("✅ Decrypted User Data:", decrypted);
+
+    user.name = updatedUserDetails.name;
+    user.email = updatedUserDetails.email;
+    user.role = updatedUserDetails.role;
+    user.loginType = updatedUserDetails.loginType;
 
     await user.save();
 
-    res.json({
+    res.status(200).json({
       status: true,
-      message: "User updated successfully...",
+      message: "User Updated Successfully...",
       data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        encryptedUserData: encryptedData,
+        iv: iv,
+        key: key,
       },
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error updating user:", err);
     res.status(500).json({
       status: false,
       message: "Something went wrong",
@@ -341,10 +379,8 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // 2. Hash token
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-    // 3. Find user with token and expiry
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
       resetPasswordExpire: { $gt: Date.now() },
@@ -357,7 +393,6 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // 4. Update password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     console.log("Resetting password for:", user.email);
     console.log("Raw password to be hashed by middleware:", newPassword);
@@ -375,7 +410,6 @@ exports.resetPassword = async (req, res) => {
         console.error("Error saving user:", err);
       });
 
-    // 5. Success response
     return res.status(200).json({
       status: true,
       message: "Password has been reset successfully...",
@@ -425,11 +459,14 @@ exports.googleLoginWithToken = async (req, res) => {
 
   try {
     // Get user info from Google
-    const googleRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
+    const googleRes = await axios.get(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
 
     const { name, email, picture } = googleRes.data;
 
@@ -479,9 +516,11 @@ exports.googleLoginWithToken = async (req, res) => {
         loginType: newUser.loginType,
       },
     });
-
   } catch (err) {
-    console.error("Failed to verify token with Google:", err.response?.data || err.message);
+    console.error(
+      "Failed to verify token with Google:",
+      err.response?.data || err.message
+    );
     res.status(401).json({ error: "Invalid access token" });
   }
 };

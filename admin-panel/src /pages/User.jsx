@@ -7,7 +7,7 @@ export default function Users() {
   const [newRole, setNewRole] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 7;
+  const usersPerPage = 15;
 
   // FETCH USER
   const fetchUsers = async () => {
@@ -121,7 +121,7 @@ export default function Users() {
         />
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-xl">
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">

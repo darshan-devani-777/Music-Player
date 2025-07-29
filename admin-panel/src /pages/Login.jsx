@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
+import { decryptData } from "../api/crypto";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -30,19 +31,29 @@ export default function Login() {
         password,
       });
 
-      const { accessToken, user } = res.data.data;
+      const { accessToken, refreshToken, encryptedUserData, iv, key } =
+        res.data.data;
 
-      if (user.role !== "admin") {
+      console.log("Login Success", res.data);
+
+      // Decrypt Data
+      const decryptedUser = decryptData(encryptedUserData, iv, key);
+
+      if (decryptedUser?.role !== "admin") {
         alert("Only Admins are allowed.");
         return (window.location.href = "/");
       }
 
       localStorage.setItem("token", accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("user", JSON.stringify(decryptedUser));
 
       navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("Login error:", err);
+      if (err?.response) {
+        console.log("Error Response:", err.response.data);
+      }
       alert(err?.response?.data?.message || "Login failed");
     }
   };

@@ -4,7 +4,7 @@ const api = axios.create({
   baseURL: "http://localhost:5000/api",
 });
 
-// Attach token if available
+// Attach token 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token") || localStorage.getItem("guestToken");
   if (token) {
@@ -25,12 +25,10 @@ api.interceptors.response.use(
       (message.includes("expired") || message.includes("over"));
 
     if (isExpired) {
-      // Clear storage
       localStorage.removeItem("token");
       localStorage.removeItem("guestToken");
       localStorage.removeItem("user");
 
-      // Redirect to login
       window.location.href = "/login";
     }
 

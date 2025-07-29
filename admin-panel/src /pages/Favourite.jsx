@@ -10,7 +10,7 @@ export default function Favourites() {
   const [songId, setSongId] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 7;
+  const perPage = 15;
   const token = localStorage.getItem("token");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -105,7 +105,7 @@ export default function Favourites() {
 
   return (
     <div className="">
-      <h2 className="text-2xl font-semibold border-b pb-2">
+      <h2 className="text-2xl font-semibold underline">
         Favourite Management
       </h2>
 
@@ -222,7 +222,7 @@ export default function Favourites() {
       {loading && <p className="text-blue-500 mb-2">Loading...</p>}
 
       {/* Table */}
-      <div className="overflow-x-auto bg-gray-900">
+      <div className="overflow-x-auto bg-gray-900 rounded-xl">
         <table className="w-full text-sm text-left border border-gray-700 rounded-lg overflow-hidden">
           <thead className="bg-gray-800 text-white uppercase text-xs">
             <tr>
