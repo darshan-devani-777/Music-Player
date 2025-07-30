@@ -1,4 +1,5 @@
 const Genre = require("../models/genreModel");
+const Activity = require('../models/activityModel');
 
 // CREATE GENRE
 exports.createGenre = async (req, res) => {
@@ -25,6 +26,13 @@ exports.createGenre = async (req, res) => {
     });
 
     await genre.save();
+
+    await Activity.create({
+      user: req.user._id,
+      action: "Created_genre",
+      targetType: "Genre",
+      targetId: genre._id,
+    });
 
     const populatedGenre = await Genre.findById(genre._id).populate(
       "createdBy",
@@ -144,6 +152,13 @@ exports.updateGenre = async (req, res) => {
         ],
       });
 
+    await Activity.create({
+      user: req.user._id,
+      action: "Updated_genre",
+      targetType: "Genre",
+      targetId: updatedGenre._id,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Genre Updated Successfully...",
@@ -172,6 +187,13 @@ exports.deleteGenre = async (req, res) => {
         message: `Genre not found with ID: ${req.params.id}`,
       });
     }
+
+    await Activity.create({
+      user: req.user._id,
+      action: "Deleted_genre",
+      targetType: "Genre",
+      targetId: genre._id,
+    });
 
     return res.status(200).json({
       success: true,

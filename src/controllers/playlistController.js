@@ -1,6 +1,7 @@
 const Playlist = require("../models/playlistModel");
 const Album = require("../models/albumModel");
 const Song = require("../models/songModel");
+const Activity = require('../models/activityModel');
 
 // CREATE PLAYLIST
 exports.createPlaylist = async (req, res) => {
@@ -40,6 +41,13 @@ exports.createPlaylist = async (req, res) => {
     });
 
     const savedPlaylist = await playlist.save();
+
+    await Activity.create({
+      user: userId,
+      action: "Created_playlist",
+      targetType: "Playlist",
+      targetId: savedPlaylist._id,
+    });
 
     const populatedPlaylist = await Playlist.findById(savedPlaylist._id)
       .populate("createdBy", "_id name email")
@@ -179,6 +187,13 @@ exports.updatePlaylist = async (req, res) => {
       });
     }
 
+    await Activity.create({
+      user: updatedPlaylist.createdBy._id,
+      action: "Updated_playlist",
+      targetType: "Playlist",
+      targetId: updatedPlaylist._id,
+    });
+
     res.status(200).json({
       status: "success",
       message: "Playlist Updated Successfully...",
@@ -207,6 +222,13 @@ exports.deletePlaylist = async (req, res) => {
         message: "Playlist not found",
       });
     }
+
+    await Activity.create({
+      user: userId,
+      action: "Deleted_playlist",
+      targetType: "Playlist",
+      targetId: req.params.id,
+    });
 
     res.status(200).json({
       status: "success",

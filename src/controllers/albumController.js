@@ -1,4 +1,5 @@
 const Album = require("../models/albumModel");
+const Activity = require('../models/activityModel');
 
 // CREATE ALBUM
 exports.createAlbum = async (req, res) => {
@@ -30,6 +31,13 @@ exports.createAlbum = async (req, res) => {
     const populatedAlbum = await savedAlbum
       .populate("createdBy", "_id name email")
       .populate("artistId", "_id name bio artistImage");
+
+      await Activity.create({
+        user: userId,
+        action: 'Created_album',
+        targetType: 'Album',
+        targetId: savedAlbum._id,
+      });
 
     res.status(201).json({
       status: "success",
@@ -154,6 +162,13 @@ exports.updateAlbum = async (req, res) => {
       });
     }
 
+    await Activity.create({
+      user: updatedAlbum.createdBy._id,
+      action: 'Updated_album',
+      targetType: 'Album',
+      targetId: updatedAlbum._id,
+    });
+    
     return res.status(200).json({
       status: "success",
       message: "Album Updated Successfully...",
@@ -192,6 +207,13 @@ exports.deleteAlbum = async (req, res) => {
         message: "Album not found",
       });
     }
+
+    await Activity.create({
+      user: deletedAlbum.createdBy._id,
+      action: 'Deleted_album',
+      targetType: 'Album',
+      targetId: deletedAlbum._id,
+    });
 
     res.status(200).json({
       status: "success",

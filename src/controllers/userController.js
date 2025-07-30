@@ -7,6 +7,7 @@ require("dotenv").config();
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 const sendEmail = require("../utils/sendEmail");
 const { encryptData, decryptData } = require("../utils/crypto");
+const Activity = require("../models/activityModel"); 
 
 // SIGNUP USER
 exports.signup = async (req, res) => {
@@ -35,7 +36,7 @@ exports.signup = async (req, res) => {
       loginType: "local",
     };
 
-    const { encryptedData, iv , key} = encryptData(userDetails);
+    const { encryptedData, iv, key } = encryptData(userDetails);
 
     console.log("🔐 Encrypted User Data:", encryptedData);
     console.log("🧊 IV:", iv);
@@ -50,6 +51,13 @@ exports.signup = async (req, res) => {
       password,
       loginType: "local",
       role,
+    });
+
+    await Activity.create({
+      user: newUser._id,
+      action: 'User_signup',
+      targetType: 'User',
+      targetId: newUser._id,
     });
 
     res.status(201).json({
@@ -120,11 +128,11 @@ exports.login = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      loginType: user.loginType || 'manual',
+      loginType: user.loginType || "manual",
     };
 
     // Encrypt Data
-    const { encryptedData, iv , key} = encryptData(userDetails);
+    const { encryptedData, iv, key } = encryptData(userDetails);
 
     console.log("🔐 Encrypted User Data:", encryptedData);
     console.log("🧊 IV:", iv);
@@ -193,7 +201,7 @@ exports.updateUser = async (req, res) => {
       loginType: user.loginType,
     };
 
-    const { encryptedData, iv , key} = encryptData(updatedUserDetails);
+    const { encryptedData, iv, key } = encryptData(updatedUserDetails);
 
     console.log("🔐 Encrypted User Data:", encryptedData);
     console.log("🧊 IV:", iv);
@@ -207,6 +215,25 @@ exports.updateUser = async (req, res) => {
     user.loginType = updatedUserDetails.loginType;
 
     await user.save();
+
+     const currentUserId = req.user._id.toString();
+     const targetUserId = userId.toString();
+ 
+     if (req.user.role === "admin" && currentUserId !== targetUserId) {
+       await Activity.create({
+         user: req.user._id, 
+         action: "Updated_role",
+         targetType: "User",
+         targetId: user._id, 
+       });
+     } else {
+       await Activity.create({
+         user: req.user._id,
+         action: "Updated_own_profile",
+         targetType: "User",
+         targetId: user._id,
+       });
+     }
 
     res.status(200).json({
       status: true,
@@ -239,6 +266,13 @@ exports.deleteUser = async (req, res) => {
         message: "User not found",
       });
     }
+
+    await Activity.create({
+      user: req.user ? req.user._id : null, 
+      action: 'delete_user',
+      targetType: 'User',                 
+      targetId: deletedUser._id,          
+    });
 
     res.status(200).json({
       status: true,
@@ -311,33 +345,85 @@ exports.forgotPassword = async (req, res) => {
       .digest("hex");
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpire = Date.now() + 5 * 60 * 1000; // 5 minutes
+    const TOKEN_EXPIRY_MINUTES = 5; // 5 Minutes
+    user.resetPasswordExpire = Date.now() + TOKEN_EXPIRY_MINUTES * 60 * 1000;
+
     await user.save();
 
-    // Create reset URL
+    // Reset URL
     const resetUrl = `http://${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    console.log(`✅ Password reset requested by: ${email}`);
+    console.log(`🌐 Reset link: ${resetUrl}`);
+    const now = new Date();
+    console.log(`🕒 Requested at: ${now.toLocaleString()}`);
+    console.log(`⏳ Link will expire in: 5 minutes`);
+    setTimeout(() => {
+      console.log(`⏳ Password reset token expired for: ${email}`);
+    }, 5 * 60 * 1000);
 
     // Email content
     const html = `
-  <div style="max-width: 500px; margin: auto; padding: 20px; font-family: Arial, sans-serif; border: 1px solid #eee; border-radius: 8px;">
-    <h2 style="text-align: center; color: #333;">Reset Your Password</h2>
-    <p style="color: #555;">Hi ${user.fullName || "there"},</p>
-    <p style="color: #555;">
-      We received a request to reset your password. Click the button below to set a new password.
-    </p>
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${resetUrl}" style="background-color: #007bff; color: #fff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-        Reset Password
-      </a>
-    </div>
-    <p style="color: #888; font-size: 14px;">
-      This link will expire in 15 minutes. If you didn’t request a password reset, please ignore this email.
-    </p>
-    <p style="color: #aaa; font-size: 13px; margin-top: 30px;">
-      — The Support Team
-    </p>
-  </div>
-`;
+    <html>
+      <head>
+        <style>
+          .reset-container {
+            max-width: 500px;
+            margin: auto;
+            padding: 24px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          }
+  
+          .reset-button {
+            background-color: #007bff;
+            color: #ffffff !important;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+            font-size: 12px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+          }
+  
+          .reset-button:hover {
+            background-color: #0056b3;
+            box-shadow: 0 6px 14px rgba(0, 86, 179, 0.4);
+          }
+  
+          .footer-note {
+            color: #cccccc;
+            font-size: 13px;
+            margin-top: 30px;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="reset-container">
+          <h2 style="text-align: center; color: #333333;">Reset Your Password</h2>
+          <p style="color: #444444; font-size: 16px;">
+              Hi <strong>${user.name || "there"}</strong>,
+          </p>
+          <p style="color: #555555; font-size: 15px;">
+            We received a request to reset your password. Click the button below to set a new password.
+          </p>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${resetUrl}" class="reset-button">Reset Password</a>
+          </div>
+          <p style="color: #999999; font-size: 14px;">
+            This link will expire in <strong>${TOKEN_EXPIRY_MINUTES} minutes</strong>. If you didn’t request a password reset, you can safely ignore this email.
+          </p>
+          <p class="footer-note">— The Support Team</p>
+        </div>
+      </body>
+    </html>
+  `;
 
     // Send email
     await sendEmail({
@@ -394,8 +480,10 @@ exports.resetPassword = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    console.log("Resetting password for:", user.email);
-    console.log("Raw password to be hashed by middleware:", newPassword);
+    console.log("🔐 Reset Password Process:");
+    console.log(`📧 User Email       : ${user.email}`);
+    console.log(`🔑 New Raw Password : ${newPassword}`);
+    console.log(`🔒 Hashed Password  : ${hashedPassword}`);    
 
     user.password = newPassword;
     user.resetPasswordToken = undefined;
@@ -404,7 +492,7 @@ exports.resetPassword = async (req, res) => {
     await user
       .save()
       .then(() => {
-        console.log("User saved successfully");
+        console.log("User Saved And Password Reset Successfully...");
       })
       .catch((err) => {
         console.error("Error saving user:", err);

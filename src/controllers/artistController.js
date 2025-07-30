@@ -1,4 +1,5 @@
 const Artist = require("../models/artistModel");
+const Activity = require('../models/activityModel');
 
 // CREATE ARTIST
 exports.createArtist = async (req, res) => {
@@ -26,6 +27,14 @@ exports.createArtist = async (req, res) => {
     });
 
     const savedArtist = await artist.save();
+
+    await Activity.create({
+      user: userId,
+      action: 'Created_artist',
+      targetType: 'Artist',
+      targetId: savedArtist._id,
+    });
+
     const populatedArtist = await savedArtist.populate(
       "createdBy",
       "_id name email role"
@@ -119,6 +128,13 @@ exports.updateArtist = async (req, res) => {
       });
     }
 
+    await Activity.create({
+      user: userId,
+      action: 'Updated_artist',
+      targetType: 'Artist',
+      targetId: updatedArtist._id,
+    });
+
     return res.status(200).json({
       status: "success",
       message: "Artist Updated Successfully...",
@@ -156,6 +172,13 @@ exports.deleteArtist = async (req, res) => {
       });
     }
 
+    await Activity.create({
+      user: req.user._id,
+      action: 'Deleted_artist',
+      targetType: 'Artist',
+      targetId: deleted._id,
+    });
+    
     res.status(200).json({
       status: "success",
       message: "Artist Deleted Successfully...",

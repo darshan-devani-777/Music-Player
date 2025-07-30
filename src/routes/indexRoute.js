@@ -5,6 +5,7 @@ const playlistRoutes = require('./playlistRoute');
 const genreRoutes = require('./genreRoute');
 const songRoutes = require('./songRoute');
 const favouriteRoutes = require('./favouriteRoute');
+const activityRoutes = require('./activityRoute');
 
 module.exports = (app) => {
   app.use('/api/auth', userRoutes);
@@ -14,4 +15,5 @@ module.exports = (app) => {
   app.use('/api/auth', genreRoutes);
   app.use('/api/auth', songRoutes);
   app.use('/api/auth', favouriteRoutes);
+  app.use('/api/auth', activityRoutes);
 };
