@@ -1,6 +1,7 @@
 const Favourite = require('../models/favouriteModel');
 const Song = require('../models/songModel');
 const User = require('../models/userModel');
+const Activity = require('../models/activityModel');
 
 // ADD TO FAVOURITE
 exports.addToFavourites = async (req, res) => {
@@ -32,6 +33,13 @@ exports.addToFavourites = async (req, res) => {
     }
 
     const fav = await Favourite.create({ user: userId, song: songId });
+
+    await Activity.create({
+      user: userId,
+      action: 'Added_to_favourites',
+      targetType: 'Song',
+      targetId: songId
+    });
 
     const populatedFav = await Favourite.findById(fav._id)
       .populate('user', 'name email')
@@ -77,6 +85,13 @@ exports.removeFavourite = async (req, res) => {
         message: 'Favourite not found or already removed'
       });
     }
+
+    await Activity.create({
+      user: req.user._id,
+      action: 'Removed_from_favourites',
+      targetType: 'Song',
+      targetId: songId
+    });
 
     res.status(200).json({
       success: true,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import {
   FaUsers,
@@ -18,6 +19,7 @@ import {
   PointElement,
   LineElement,
 } from "chart.js";
+import TextEditor from "../components/TextEditor";
 
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement);
 
@@ -29,7 +31,8 @@ export default function Dashboard() {
   const [genreCount, setGenreCount] = useState(0);
   const [songCount, setSongCount] = useState(0);
   const [favouriteCount, setFavouriteCount] = useState(0);
-
+  const [activities, setActivities] = useState([]);
+  const [chartData, setChartData] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,6 +93,86 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    api
+      .get("http://localhost:5000/api/auth/activities/recent", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.data.success) {
+          setActivities(res.data.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching activities:", err);
+      });
+  }, []);
+
+  // GET CHARTS
+  useEffect(() => {
+    const fetchUserGrowth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await api.get("/auth/activities/get-user-additions", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.data.success && Array.isArray(res.data.data)) {
+          const chartLabels = res.data.data.map((item) => item.date);
+          const chartCounts = res.data.data.map((item) => item.count);        
+
+          const maxCount = Math.max(...chartCounts);
+          const suggestedMax = Math.ceil((maxCount + 2) / 5) * 5;
+
+          const chartOptions = {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                suggestedMax: suggestedMax,
+                ticks: {
+                  stepSize: 1,
+                  callback: function (value) {
+                    if (Number.isInteger(value)) return value;
+                  },
+                },
+              },
+            },
+          };
+
+          setChartData({
+            labels: chartLabels,
+            datasets: [
+              {
+                label: "User Additions",
+                data: chartCounts,
+                backgroundColor: "rgba(124, 58, 237, 0.1)",
+                borderColor: "#7C3AED",
+                tension: 0.4,
+                fill: true,
+              },
+            ],
+            options: chartOptions, 
+          });
+        }
+      } catch (err) {
+        console.error("Error loading user growth data:", err);
+      }
+    };
+
+    fetchUserGrowth();
+  }, []);
+
   const cards = [
     {
       label: "Users",
@@ -142,30 +225,30 @@ export default function Dashboard() {
     },
   ];
 
-  const chartData = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-    datasets: [
-      {
-        label: "User Growth",
-        data: [10, 20, 40, 60, 80, userCount],
-        fill: true,
-        backgroundColor: "rgba(124, 58, 237, 0.1)",
-        borderColor: "#7C3AED",
-        tension: 0.4,
-      },
-    ],
-  };
-
   return (
-    <div className="p-2 space-y-10">
+    <div className="p-2 space-y-8">
       {/* Welcome Banner */}
-      <div className="flex justify-center gap-4 p-6 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg">
-        <div className="text-4xl">🚀</div>
-        <div>
-          <h1 className="text-xl font-bold">Welcome Back, Admin!</h1>
-          <p className="text-sm text-gray-300">
-            Stay in control of your dashboard with real-time updates.
-          </p>
+      <style>
+        {`
+          @keyframes scroll-right {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+        `}
+      </style>
+
+      <div className="flex justify-center gap-4 p-2 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
+        <div
+          className="flex gap-3 animate-[scroll-right_10s_linear_infinite]"
+          style={{ whiteSpace: "nowrap" }}
+        >
+          <div className="text-3xl mt-2">🚀</div>
+          <div>
+            <h1 className="text-lg font-semibold">Welcome Back, Admin!</h1>
+            <p className="text-[13px] text-gray-300">
+              Stay in control of your dashboard with real-time updates.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -188,15 +271,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Chart Section */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">
-          📈 User Growth
-        </h3>
-        <Line data={chartData} />
-      </div>
-
-      {/* Latest Activities (Dummy Table) */}
+      {/* Latest Activities */}
       <div className="">
         <h3 className="text-xl font-semibold text-gray-800 underline">
           🕒 Latest Activities
@@ -204,39 +279,82 @@ export default function Dashboard() {
         <div className="mt-5 overflow-x-auto rounded-lg border border-gray-700">
           <table className="min-w-full text-sm text-left text-gray-300 dark:bg-gray-900 border border-gray-700">
             <thead className="text-xs uppercase bg-gray-800 text-white border-b border-gray-700">
-              <tr className="">
+              <tr>
                 <th className="px-6 py-3 border-r border-gray-700">Name</th>
+                <th className="px-6 py-3 border-r border-gray-700">Email</th>
                 <th className="px-6 py-3 border-r border-gray-700">Action</th>
+                <th className="px-6 py-3 border-r border-gray-700">Target</th>
                 <th className="px-6 py-3">Date</th>
               </tr>
             </thead>
             <tbody>
-              {[
-                {
-                  name: "John Doe",
-                  action: "Created playlist",
-                  date: "2025-07-28",
-                },
-                { name: "Alice", action: "Liked a song", date: "2025-07-27" },
-                { name: "Bob", action: "Added album", date: "2025-07-25" },
-              ].map((item, idx) => (
+              {activities.map((item, idx) => (
                 <tr
                   key={idx}
                   className="border-b border-gray-700 cursor-pointer dark:hover:bg-gray-800"
                 >
                   <td className="px-6 py-4 border-r border-gray-700">
-                    {item.name}
+                    {item.user?.name || "Unknown"}
                   </td>
                   <td className="px-6 py-4 border-r border-gray-700">
-                    {item.action}
+                    {item.user?.email || "N/A"}
                   </td>
-                  <td className="px-6 py-4 text-gray-400">{item.date}</td>
+                  <td className="px-6 py-4 border-r border-gray-700">
+                    {item.action.replaceAll("_", " ")}
+                  </td>
+                  <td className="px-6 py-4 border-r border-gray-700">
+                    {item.targetType}
+                  </td>
+                  <td className="px-6 py-4 text-gray-400">
+                    {(() => {
+                      const date = new Date(item.createdAt);
+
+                      const day = String(date.getDate()).padStart(2, "0");
+                      const month = String(date.getMonth() + 1).padStart(
+                        2,
+                        "0"
+                      );
+                      const year = date.getFullYear();
+
+                      let hours = date.getHours();
+                      const minutes = String(date.getMinutes()).padStart(
+                        2,
+                        "0"
+                      );
+                      const ampm = hours >= 12 ? "PM" : "AM";
+                      hours = hours % 12 || 12;
+
+                      return `${day}/${month}/${year} , ${hours}:${minutes} ${ampm}`;
+                    })()}
+                  </td>
                 </tr>
               ))}
+              {activities.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="text-center py-4 text-gray-400">
+                    No Recent Activities Found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Chart Section */}
+      <div className="bg-white p-6 rounded-xl shadow">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">
+          📈 User Growth
+        </h3>
+        {chartData ? (
+          <Line data={chartData} options={chartData.options} />
+        ) : (
+          <p className="text-gray-600">Loading chart...</p>
+        )}
+      </div>
+
+      {/* Text Editor */}
+      <TextEditor />
     </div>
   );
 }

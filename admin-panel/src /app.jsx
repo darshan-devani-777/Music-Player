@@ -35,6 +35,8 @@ export default function App() {
             </PrivateRoute>
           }
         >
+          <Route index element={<Dashboard />} />
+          
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="users" element={<Users />} />
           <Route path="artists" element={<Artists />} />

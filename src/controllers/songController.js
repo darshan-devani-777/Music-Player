@@ -4,6 +4,7 @@ const cloudinary = require("../utils/cloudinary");
 const Song = require("../models/songModel");
 const Album = require("../models/albumModel");
 const Genre = require("../models/genreModel");
+const Activity = require('../models/activityModel');
 
 // CREATE SONG
 exports.createSong = async (req, res) => {
@@ -52,7 +53,6 @@ exports.createSong = async (req, res) => {
       songImage = req.files.map((file) => file.path); 
     }
 
-    // Create song
     const song = await Song.create({
       title,
       duration: formattedDuration,
@@ -64,10 +64,15 @@ exports.createSong = async (req, res) => {
       songImage, 
     });
 
-    // Add song to Album
+    await Activity.create({
+      user: userId,
+      action: "Created_song",
+      targetType: "Song",
+      targetId: song._id,
+    });
+
     await Album.findByIdAndUpdate(albumId, { $push: { songs: song._id } });
 
-    // Add song to Genre
     if (genreId) {
       await Genre.findByIdAndUpdate(genreId, { $push: { songs: song._id } });
     }
@@ -243,6 +248,13 @@ exports.updateSong = async (req, res) => {
     Object.assign(song, updates);
     await song.save();
 
+    await Activity.create({
+      user: req.user.id,
+      action: "Updated_song",
+      targetType: "Song",
+      targetId: song._id,
+    });
+
     const updatedSong = await Song.findById(song._id)
       .populate("artistId albumId genreId")
       .populate("uploadedBy", "_id name email");
@@ -303,6 +315,13 @@ exports.deleteSong = async (req, res) => {
     };
 
     await song.deleteOne();
+
+    await Activity.create({
+      user: req.user.id,
+      action: "Deleted_song",
+      targetType: "Song",
+      targetId: song._id,
+    });
 
     return res.status(200).json({
       success: true,

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   FaUser,
   FaMusic,
@@ -17,18 +17,22 @@ import {
 export default function Sidebar() {
   const user = JSON.parse(localStorage.getItem("user"));
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
 
-  const linkClass = ({ isActive }) =>
-    `group flex ${
+  const linkClass = ({ isActive }, to) => {
+    const isRootAndDashboard = location.pathname === "/" && to === "/dashboard";
+
+    return `group flex ${
       isCollapsed
         ? "flex-col items-center justify-center"
         : "flex-row items-center justify-start"
     } gap-1 py-2 px-4 rounded-lg text-sm font-medium transition whitespace-nowrap w-full
      ${
-       isActive
+       isActive || isRootAndDashboard
          ? "bg-purple-600 text-white shadow"
          : "text-gray-300 hover:bg-gray-700 hover:text-white"
      }`;
+  };
 
   const navItems = [
     { to: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
@@ -96,7 +100,7 @@ export default function Sidebar() {
           }`}
         >
           {navItems.map(({ to, icon, label }, i) => (
-            <NavLink key={i} to={to} className={linkClass}>
+            <NavLink key={i} to={to} className={(props) => linkClass(props, to)}>
               {icon}
               {isCollapsed ? (
                 <span className="text-[10px] mt-1 text-center leading-tight">
