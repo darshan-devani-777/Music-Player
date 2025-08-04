@@ -41,11 +41,10 @@ router.get(
   playlistController.getAllPlaylists
 );
 
-// GET SPECIFIC PLAYLIST (Admin)
+// GET SPECIFIC PLAYLIST (Admin / User)
 router.get(
   "/playlist/get-specific-playlist/:id",
   authMiddleware,
-  isAdmin,
   playlistController.getPlaylistById
 );
 

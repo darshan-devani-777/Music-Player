@@ -175,7 +175,7 @@ export default function Favourites() {
           placeholder="Search by song, user, or email..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
         />
       </div>
 
@@ -187,7 +187,7 @@ export default function Favourites() {
             placeholder="Enter User ID"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition text-sm"
+            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 transition text-sm"
           />
           <button
             onClick={fetchFavouritesByUser}
@@ -206,7 +206,7 @@ export default function Favourites() {
             placeholder="Enter Song ID"
             value={songId}
             onChange={(e) => setSongId(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm"
+            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 transition text-sm"
           />
           <button
             onClick={fetchUsersBySong}
@@ -217,7 +217,6 @@ export default function Favourites() {
         </div>
       )}
 
-      {/* Error & Loading */}
       {error && <p className="text-red-600 mb-2">{error}</p>}
       {loading && <p className="text-blue-500 mb-2">Loading...</p>}
 
@@ -246,10 +245,10 @@ export default function Favourites() {
             ) : (
               currentList.map((item, index) => (
                 <tr key={item._id} className="hover:bg-gray-800 transition">
-                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                  <td className="p-3 border dark:border-gray-600 text-white text-sm">
                     {(currentPage - 1) * perPage + index + 1}.
                   </td>
-                  <td className="p-3 border border-gray-700 text-gray-400">
+                  <td className="p-3 border border-gray-700 text-white">
                     {item.song?.title || "—"}
                   </td>
                   <td className="p-3 border border-gray-700 text-gray-400">

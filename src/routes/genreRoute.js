@@ -41,11 +41,10 @@ router.get(
   genreController.getAllGenres
 );
 
-// GET SPECIFIC GENRE (Admin)
+// GET SPECIFIC GENRE (Admin / User)
 router.get(
   "/genre/get-specific-genre/:id", 
   authMiddleware, 
-  isAdmin, 
   genreController.getGenreById
 );
 

@@ -143,7 +143,7 @@ export default function Albums() {
           placeholder="Search by title, artist, or release date..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
         />
       </div>
 
@@ -151,7 +151,7 @@ export default function Albums() {
         <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
           <thead className="uppercase text-xs">
             <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
-            <th className="p-3 border dark:border-gray-600">ID</th>
+              <th className="p-3 border dark:border-gray-600">ID</th>
               <th className="p-3 border dark:border-gray-600">Image</th>
               <th className="p-3 border dark:border-gray-600">Title</th>
               <th className="p-3 border dark:border-gray-600">Artist</th>
@@ -172,12 +172,12 @@ export default function Albums() {
                 </td>
               </tr>
             ) : (
-              currentAlbums.map((album , index) => (
+              currentAlbums.map((album, index) => (
                 <tr
                   key={album._id}
                   className="dark:hover:bg-gray-800 cursor-pointer"
                 >
-                   <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
                     {(currentPage - 1) * albumsPerPage + index + 1}.
                   </td>
                   <td className="p-3 border dark:border-gray-600">
@@ -292,19 +292,19 @@ export default function Albums() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96 border border-purple-800">
+        <div className="fixed inset-0 bg-white/0 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md w-96 border border-purple-500">
             <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
               {editId ? "Update Album" : "Add Album"}
             </h2>
             <form onSubmit={handleFormSubmit}>
               <div className="mb-4">
-                <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <label className="block text-sm text-black font-semibold mb-1">
                   Title
                 </label>
                 <input
                   type="text"
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  className="w-full border px-3 py-2 rounded bg-white text-black"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
@@ -314,12 +314,12 @@ export default function Albums() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <label className="block text-sm text-black font-semibold mb-1">
                   Artist
                 </label>
                 <input
                   type="text"
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  className="w-full border px-3 py-2 rounded bg-white text-black"
                   value={formData.artist}
                   onChange={(e) =>
                     setFormData({ ...formData, artist: e.target.value })
@@ -329,12 +329,12 @@ export default function Albums() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <label className="block text-sm text-black font-semibold mb-1">
                   Release Date
                 </label>
                 <input
                   type="date"
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  className="w-full border px-3 py-2 rounded bg-white text-black"
                   value={formData.releaseDate}
                   onChange={(e) =>
                     setFormData({ ...formData, releaseDate: e.target.value })
@@ -344,13 +344,13 @@ export default function Albums() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <label className="block text-sm text-black font-semibold mb-1">
                   Album Image
                 </label>
                 <input
                   type="file"
                   accept="image/*"
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  className="w-full border px-3 py-2 rounded bg-white text-black hover:border-purple-400 transition duration-300 cursor-pointer"
                   onChange={(e) =>
                     setFormData({ ...formData, albumImage: e.target.files[0] })
                   }
@@ -360,14 +360,14 @@ export default function Albums() {
               <div className="flex justify-between">
                 <button
                   type="submit"
-                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 cursor-pointer transition duration-300"
+                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
                 >
                   {editId ? "Update" : "Add"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 cursor-pointer transition duration-300"
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
                 >
                   Cancel
                 </button>

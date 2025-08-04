@@ -139,7 +139,7 @@ export default function Artists() {
           placeholder="Search by name or bio..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
         />
       </div>
 
@@ -279,19 +279,19 @@ export default function Artists() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96 border border-purple-800">
+        <div className="fixed inset-0 bg-white/0 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-md w-96 border border-purple-500">
             <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
               {editId ? "Update Artist" : "Add Artist"}
             </h2>
             <form onSubmit={handleFormSubmit}>
               <div className="mb-4">
-                <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <label className="block text-sm text-black font-semibold mb-1">
                   Name
                 </label>
                 <input
                   type="text"
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 hover:border-purple-500"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -299,12 +299,13 @@ export default function Artists() {
                   required
                 />
               </div>
+
               <div className="mb-4">
-                <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <label className="block text-sm text-black font-semibold mb-1">
                   Bio
                 </label>
                 <textarea
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
+                  className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 hover:border-purple-500"
                   value={formData.bio}
                   onChange={(e) =>
                     setFormData({ ...formData, bio: e.target.value })
@@ -312,14 +313,15 @@ export default function Artists() {
                   required
                 ></textarea>
               </div>
+
               <div className="mb-4">
-                <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <label className="block text-sm text-black font-semibold mb-1">
                   Image
                 </label>
                 <input
                   type="file"
                   accept="image/*"
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white cursor-pointer"
+                  className="w-full border px-3 py-2 rounded cursor-pointer file:hover:cursor-pointer hover:border-purple-500"
                   onChange={(e) =>
                     setFormData({ ...formData, artistImage: e.target.files[0] })
                   }
@@ -329,14 +331,14 @@ export default function Artists() {
               <div className="flex justify-between">
                 <button
                   type="submit"
-                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 cursor-pointer transition duration-300"
+                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
                 >
                   {editId ? "Update" : "Add"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 cursor-pointer transition duration-300"
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
                 >
                   Cancel
                 </button>

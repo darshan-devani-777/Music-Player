@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import Topbar from "./Topbar";
 import {
-  FaUser,
   FaMusic,
   FaHeadphones,
   FaThLarge,
@@ -17,26 +17,28 @@ import {
 export default function Sidebar() {
   const user = JSON.parse(localStorage.getItem("user"));
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const scrollRef = useRef(null);
   const location = useLocation();
+
+  useEffect(() => {
+    if (!isCollapsed && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [isCollapsed]);
 
   const linkClass = ({ isActive }, to) => {
     const isRootAndDashboard = location.pathname === "/" && to === "/dashboard";
-
     return `group flex ${
-      isCollapsed
-        ? "flex-col items-center justify-center"
-        : "flex-row items-center justify-start"
-    } gap-1 py-2 px-4 rounded-lg text-sm font-medium transition whitespace-nowrap w-full
-     ${
-       isActive || isRootAndDashboard
-         ? "bg-purple-600 text-white shadow"
-         : "text-gray-300 hover:bg-gray-700 hover:text-white"
-     }`;
+      isCollapsed ? "flex-col items-center" : "flex-row items-center"
+    } gap-1 py-2 px-4 rounded-lg text-sm font-medium transition w-full whitespace-nowrap ${
+      isActive || isRootAndDashboard
+        ? "bg-purple-600 text-white shadow"
+        : "text-gray-300 hover:bg-gray-700 hover:text-white"
+    }`;
   };
 
   const navItems = [
     { to: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
-    { to: "/users", icon: <FaUser />, label: "Users" },
     { to: "/artists", icon: <FaHeadphones />, label: "Artists" },
     { to: "/albums", icon: <FaCompactDisc />, label: "Albums" },
     { to: "/playlists", icon: <FaThLarge />, label: "Playlists" },
@@ -46,77 +48,56 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex w-full min-h-screen">
       {/* Sidebar */}
       <aside
-        className={`h-screen fixed top-0 left-0 bg-gray-900 text-white shadow-lg z-50 flex flex-col transition-all duration-300 ${
+        className={`fixed top-0 left-0 h-screen bg-gray-900 text-white shadow-lg z-50 flex flex-col transition-all duration-300 ${
           isCollapsed ? "w-20 items-center" : "w-64 items-start"
         }`}
       >
-        {/* Collapse Button */}
+        {/* Collapse Button & Title */}
         <div className={`w-full ${isCollapsed ? "py-4" : "p-4"}`}>
-          <div
-            className={`flex w-full flex-col ${
-              isCollapsed ? "items-center" : "items-end"
-            }`}
-          >
+          <div className={`flex w-full ${isCollapsed ? "justify-center" : "justify-between items-center"}`}>
+            {!isCollapsed && (
+              <h1 className="text-2xl font-semibold text-purple-400 underline">Admin Panel</h1>
+            )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="bg-gray-700 hover:bg-gray-600 p-2 rounded-full text-white transition cursor-pointer"
+              className="bg-gray-700 hover:bg-gray-600 p-2 rounded-full transition cursor-pointer"
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
             </button>
-
-            {!isCollapsed && (
-              <h1 className="text-2xl font-semibold text-purple-400 mt-3 underline text-start w-full">
-                Admin Panel
-              </h1>
-            )}
           </div>
         </div>
 
-        {/* Admin Info */}
-        {!isCollapsed && user && (
-          <div className="px-4 w-full">
-            <div className="p-3 rounded bg-gray-800 border border-purple-600 mb-2">
-              <p className="text-lg font-semibold text-purple-300">
-                {user.name}
-              </p>
-              <p className="text-[14px] text-gray-400">{user.email}</p>
-              <p className="text-sm text-green-400 capitalize mt-1">
-                Role: {user.role}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Navigation */}
+        {/* Navigation Menu */}
         <div
-          className={`flex-1 flex flex-col gap-2 w-full transition-all mt-12 ${
-            isCollapsed
-              ? "justify-center items-center"
-              : "justify-start items-start px-4"
-          }`}
+          ref={scrollRef}
+          className="flex-1 w-full overflow-y-auto mt-8 scrollbar-thin scrollbar-thumb-gray-700"
         >
-          {navItems.map(({ to, icon, label }, i) => (
-            <NavLink key={i} to={to} className={(props) => linkClass(props, to)}>
-              {icon}
-              {isCollapsed ? (
-                <span className="text-[10px] mt-1 text-center leading-tight">
-                  {label}
-                </span>
-              ) : (
-                <span className="ml-2">{label}</span>
-              )}
-            </NavLink>
-          ))}
+          <div
+            className={`flex flex-col gap-2 w-full transition-all ${
+              isCollapsed ? "items-center" : "items-start px-2"
+            }`}
+          >
+            {navItems.map(({ to, icon, label }, i) => (
+              <NavLink key={i} to={to} className={(props) => linkClass(props, to)}>
+                {icon}
+                {isCollapsed ? (
+                  <span className="text-[10px] mt-1 text-center">{label}</span>
+                ) : (
+                  <span className="ml-2">{label}</span>
+                )}
+              </NavLink>
+            ))}
+          </div>
         </div>
 
         {/* Logout Button */}
         <div className="p-4 w-full">
           <button
-            className={`flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition cursor-pointer w-full ${
+            className={`flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition w-full cursor-pointer ${
               isCollapsed ? "justify-center px-2" : "justify-center"
             }`}
             onClick={() => {
@@ -131,14 +112,15 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-20" : "ml-64"
-        } p-6 overflow-y-auto`}
-      >
-        <Outlet />
-      </main>
+      {/* Main Area */}
+      <div className={`flex-1 ${isCollapsed ? "ml-20" : "ml-64"} transition-all duration-300`}>
+        <div className="bg-gray-100 min-h-screen">
+          <Topbar user={user} isCollapsed={isCollapsed} />
+          <main className="pt-20 p-4 overflow-y-auto min-h-screen">
+            <Outlet />
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

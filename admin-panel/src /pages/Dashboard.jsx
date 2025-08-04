@@ -20,6 +20,7 @@ import {
   LineElement,
 } from "chart.js";
 import TextEditor from "../components/TextEditor";
+import Faq from "../components/Faq";
 
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement);
 
@@ -226,7 +227,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-2 space-y-8">
+    <div className="space-y-8">
       {/* Welcome Banner */}
       <style>
         {`
@@ -236,24 +237,24 @@ export default function Dashboard() {
           }
         `}
       </style>
-
-      <div className="flex justify-center gap-4 p-2 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
+  
+      <div className="flex justify-center sm:justify-between gap-4 p-2 sm:p-4 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
         <div
           className="flex gap-3 animate-[scroll-right_10s_linear_infinite]"
           style={{ whiteSpace: "nowrap" }}
         >
-          <div className="text-3xl mt-2">🚀</div>
+          <div className="text-2xl sm:text-3xl mt-1">🚀</div>
           <div>
-            <h1 className="text-lg font-semibold">Welcome Back, Admin!</h1>
-            <p className="text-[13px] text-gray-300">
+            <h1 className="text-base sm:text-lg font-semibold">Welcome Back, Admin!</h1>
+            <p className="text-xs sm:text-sm text-gray-300">
               Stay in control of your dashboard with real-time updates.
             </p>
           </div>
         </div>
       </div>
-
+  
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {cards.map((card, idx) => (
           <div
             key={idx}
@@ -262,29 +263,29 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold">{card.label}</h3>
-                <p className="text-3xl font-semibold mt-1">{card.count}</p>
+                <h3 className="text-base sm:text-lg font-semibold">{card.label}</h3>
+                <p className="text-2xl sm:text-3xl font-semibold mt-1">{card.count}</p>
               </div>
-              <div className="text-3xl opacity-80">{card.icon}</div>
+              <div className="text-2xl sm:text-3xl opacity-80">{card.icon}</div>
             </div>
           </div>
         ))}
       </div>
-
+  
       {/* Latest Activities */}
-      <div className="">
-        <h3 className="text-xl font-semibold text-gray-800 underline">
+      <div>
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 underline">
           🕒 Latest Activities
         </h3>
         <div className="mt-5 overflow-x-auto rounded-lg border border-gray-700">
           <table className="min-w-full text-sm text-left text-gray-300 dark:bg-gray-900 border border-gray-700">
             <thead className="text-xs uppercase bg-gray-800 text-white border-b border-gray-700">
               <tr>
-                <th className="px-6 py-3 border-r border-gray-700">Name</th>
-                <th className="px-6 py-3 border-r border-gray-700">Email</th>
-                <th className="px-6 py-3 border-r border-gray-700">Action</th>
-                <th className="px-6 py-3 border-r border-gray-700">Target</th>
-                <th className="px-6 py-3">Date</th>
+                <th className="px-4 sm:px-6 py-3 border-r border-gray-700">Name</th>
+                <th className="px-4 sm:px-6 py-3 border-r border-gray-700">Email</th>
+                <th className="px-4 sm:px-6 py-3 border-r border-gray-700">Action</th>
+                <th className="px-4 sm:px-6 py-3 border-r border-gray-700">Target</th>
+                <th className="px-4 sm:px-6 py-3">Date</th>
               </tr>
             </thead>
             <tbody>
@@ -293,37 +294,28 @@ export default function Dashboard() {
                   key={idx}
                   className="border-b border-gray-700 cursor-pointer dark:hover:bg-gray-800"
                 >
-                  <td className="px-6 py-4 border-r border-gray-700">
+                  <td className="px-4 sm:px-6 py-4 border-r border-gray-700 text-white text-[14px] sm:text-[15px]">
                     {item.user?.name || "Unknown"}
                   </td>
-                  <td className="px-6 py-4 border-r border-gray-700">
+                  <td className="px-4 sm:px-6 py-4 border-r border-gray-700">
                     {item.user?.email || "N/A"}
                   </td>
-                  <td className="px-6 py-4 border-r border-gray-700">
+                  <td className="px-4 sm:px-6 py-4 border-r border-gray-700 capitalize">
                     {item.action.replaceAll("_", " ")}
                   </td>
-                  <td className="px-6 py-4 border-r border-gray-700">
+                  <td className="px-4 sm:px-6 py-4 border-r border-gray-700">
                     {item.targetType}
                   </td>
-                  <td className="px-6 py-4 text-gray-400">
+                  <td className="px-4 sm:px-6 py-4 text-gray-400">
                     {(() => {
                       const date = new Date(item.createdAt);
-
                       const day = String(date.getDate()).padStart(2, "0");
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0"
-                      );
+                      const month = String(date.getMonth() + 1).padStart(2, "0");
                       const year = date.getFullYear();
-
                       let hours = date.getHours();
-                      const minutes = String(date.getMinutes()).padStart(
-                        2,
-                        "0"
-                      );
+                      const minutes = String(date.getMinutes()).padStart(2, "0");
                       const ampm = hours >= 12 ? "PM" : "AM";
                       hours = hours % 12 || 12;
-
                       return `${day}/${month}/${year} , ${hours}:${minutes} ${ampm}`;
                     })()}
                   </td>
@@ -331,7 +323,7 @@ export default function Dashboard() {
               ))}
               {activities.length === 0 && (
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-400">
+                  <td colSpan="5" className="text-center py-4 text-gray-400">
                     No Recent Activities Found.
                   </td>
                 </tr>
@@ -340,10 +332,10 @@ export default function Dashboard() {
           </table>
         </div>
       </div>
-
+  
       {/* Chart Section */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 underline">
           📈 User Growth
         </h3>
         {chartData ? (
@@ -352,9 +344,15 @@ export default function Dashboard() {
           <p className="text-gray-600">Loading chart...</p>
         )}
       </div>
-
+  
       {/* Text Editor */}
-      <TextEditor />
+      <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
+        <TextEditor />
+      </div>
+
+      <div className="">
+        <Faq/>
+      </div>
     </div>
-  );
+  ); 
 }

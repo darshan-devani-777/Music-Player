@@ -173,7 +173,7 @@ export default function Playlists() {
           placeholder="Search by title, description, or album title..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
         />
       </div>
 
@@ -313,98 +313,102 @@ export default function Playlists() {
 
       {/* Playlist Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96 border border-purple-800">
-            <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
-              {editId ? "Update Playlist" : "Add Playlist"}
-            </h2>
-            <form onSubmit={handleFormSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Description
-                </label>
-                <textarea
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  required
-                ></textarea>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Image
-                </label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  name="playlistImage"
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
-                  onChange={(e) =>
-                    setFormData({ ...formData, playlistImage: e.target.files })
-                  }
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Select Albums
-                </label>
-                <select
-                  multiple
-                  className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-white"
-                  value={formData.selectedAlbums}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      selectedAlbums: Array.from(
-                        e.target.selectedOptions,
-                        (option) => option.value
-                      ),
-                    })
-                  }
-                >
-                  {albums.map((album) => (
-                    <option key={album._id} value={album._id}>
-                      {album.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex justify-between">
-                <button
-                  type="submit"
-                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
-                >
-                  {editId ? "Update" : "Add"}
-                </button>
-                <button
-                  type="button"
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
-                  onClick={() => setShowForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+        <div className="fixed inset-0 bg-white/0 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-lg w-96 border border-purple-500">
+          <h2 className="text-2xl font-semibold mb-4 text-center text-purple-600 underline">
+            {editId ? "Update Playlist" : "Add Playlist"}
+          </h2>
+          <form onSubmit={handleFormSubmit}>
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">
+                Title
+              </label>
+              <input
+                type="text"
+                className="w-full border px-3 py-2 rounded"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                required
+              />
+            </div>
+      
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">
+                Description
+              </label>
+              <textarea
+                className="w-full border px-3 py-2 rounded"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                required
+              ></textarea>
+            </div>
+      
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">
+                Image
+              </label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                name="playlistImage"
+                className="w-full border px-3 py-2 rounded hover:border-purple-400 transition duration-300 cursor-pointer"
+                onChange={(e) =>
+                  setFormData({ ...formData, playlistImage: e.target.files })
+                }
+              />
+            </div>
+      
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">
+                Select Albums
+              </label>
+              <select
+                multiple
+                className="w-full border px-3 py-2 rounded"
+                value={formData.selectedAlbums}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    selectedAlbums: Array.from(
+                      e.target.selectedOptions,
+                      (option) => option.value
+                    ),
+                  })
+                }
+              >
+                {albums.map((album) => (
+                  <option key={album._id} value={album._id}>
+                    {album.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+      
+            <div className="flex justify-between">
+              <button
+                type="submit"
+                className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
+              >
+                {editId ? "Update" : "Add"}
+              </button>
+              <button
+                type="button"
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
+                onClick={() => setShowForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
+      
       )}
     </div>
   );

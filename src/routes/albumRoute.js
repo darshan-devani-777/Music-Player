@@ -45,11 +45,10 @@ router.get(
   albumController.getNewReleasedAlbums
 );
 
-// GET SPECIFIC ALBUM (Admin)
+// GET SPECIFIC ALBUM (Admin / User)
 router.get(
   "/album/get-specific-album/:id",
   authMiddleware,
-  isAdmin,
   albumController.getAlbumById
 );
 

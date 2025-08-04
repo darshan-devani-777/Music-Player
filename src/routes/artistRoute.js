@@ -38,11 +38,10 @@ router.get(
   artistController.getAllArtists
 );
 
-// GET SPECIFIC ARTIST (Admin)
+// GET SPECIFIC ARTIST (Admin / User)
 router.get(
   "/artist/get-specific-artist/:id",
   authMiddleware,
-  isAdmin,
   artistController.getArtistById
 );
 

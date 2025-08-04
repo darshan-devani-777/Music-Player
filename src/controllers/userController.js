@@ -36,12 +36,12 @@ exports.signup = async (req, res) => {
       loginType: "local",
     };
 
+    // Encrypt Data
     const { encryptedData, iv, key } = encryptData(userDetails);
-
     console.log("🔐 Encrypted User Data:", encryptedData);
     console.log("🧊 IV:", iv);
 
-    // Decrypt Data Verify
+    // Decrypt Data 
     const decrypted = decryptData(encryptedData, iv);
     console.log("✅ Decrypted Data:", decrypted);
 
@@ -138,11 +138,17 @@ exports.login = async (req, res) => {
     console.log("🧊 IV:", iv);
     console.log("🧊 KEY:", key);
 
-    // Decrypt Data Verify
+    // Decrypt Data
     const decrypted = decryptData(encryptedData, iv);
     console.log("✅ Decrypted User Data:", decrypted);
 
-    // Send Response
+    await Activity.create({
+      user: user._id,
+      action: 'User_login',
+      targetType: 'User',
+      targetId: user._id,
+    });
+
     res.status(200).json({
       status: true,
       message: "User Login Successfully...",
@@ -269,7 +275,7 @@ exports.deleteUser = async (req, res) => {
 
     await Activity.create({
       user: req.user ? req.user._id : null, 
-      action: 'delete_user',
+      action: 'Delete_user',
       targetType: 'User',                 
       targetId: deletedUser._id,          
     });
@@ -310,8 +316,6 @@ exports.googleSignup = async (req, res) => {
       accessToken,
       refreshToken,
     };
-
-    // Encode and redirect to React
     const encoded = encodeURIComponent(JSON.stringify(payload));
 
     res.redirect(`http://localhost:5173/auth/google/callback?data=${encoded}`);
@@ -432,6 +436,13 @@ exports.forgotPassword = async (req, res) => {
       html,
     });
 
+    await Activity.create({
+      user: user._id,
+      action: 'User_forgot_password',
+      targetType: 'User',
+      targetId: user._id,
+    });
+
     res.status(200).json({
       status: true,
       message: "Password reset email sent successfully...",
@@ -498,6 +509,13 @@ exports.resetPassword = async (req, res) => {
         console.error("Error saving user:", err);
       });
 
+      await Activity.create({
+        user: user._id,
+        action: 'User_reset_password',
+        targetType: 'User',
+        targetId: user._id,
+      });
+
     return res.status(200).json({
       status: true,
       message: "Password has been reset successfully...",
@@ -537,7 +555,7 @@ exports.generateGuestToken = async (req, res) => {
   }
 };
 
-// GOOGLE LOGIN WITH TOKEN
+// GOOGLE LOGIN 
 exports.googleLoginWithToken = async (req, res) => {
   const { access_token } = req.body;
 
@@ -546,7 +564,6 @@ exports.googleLoginWithToken = async (req, res) => {
   }
 
   try {
-    // Get user info from Google
     const googleRes = await axios.get(
       "https://www.googleapis.com/oauth2/v3/userinfo",
       {
@@ -558,6 +575,8 @@ exports.googleLoginWithToken = async (req, res) => {
 
     const { name, email, picture } = googleRes.data;
 
+    console.log("🔐 Google User:", name, "-", email); 
+
     let user = await User.findOne({ email });
 
     if (user) {
@@ -566,6 +585,15 @@ exports.googleLoginWithToken = async (req, res) => {
           error: `This email is already registered using ${user.loginType}. Please log in using that method.`,
         });
       }
+
+      console.log("✅ Existing user logged in:", user.name, "-", user.email);
+
+      await Activity.create({
+        user: user._id,
+        action: 'User_google_login',
+        targetType: 'User',
+        targetId: user._id,
+      });
 
       return res.json({
         accessToken: user.accessToken,
@@ -593,6 +621,15 @@ exports.googleLoginWithToken = async (req, res) => {
     newUser.refreshToken = refreshToken;
     await newUser.save();
 
+    console.log("🆕 New user signed up:", newUser.name, "-", newUser.email);
+
+    await Activity.create({
+      user: newUser._id,
+      action: 'User_google_signup',
+      targetType: 'User',
+      targetId: newUser._id,
+    });
+
     return res.json({
       accessToken,
       refreshToken,
@@ -612,3 +649,4 @@ exports.googleLoginWithToken = async (req, res) => {
     res.status(401).json({ error: "Invalid access token" });
   }
 };
+

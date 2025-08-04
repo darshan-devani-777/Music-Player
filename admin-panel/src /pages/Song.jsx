@@ -155,7 +155,7 @@ export default function Songs() {
           placeholder="Search by title or artist..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 text-sm border rounded dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400"
+          className="w-full max-w-md px-4 py-2 text-sm border rounded dark:bg-gray-800 dark:border-blue-500 focus:outline-none focus:border-red-400  !placeholder-gray-300"
         />
       </div>
 
@@ -297,168 +297,155 @@ export default function Songs() {
 
       {/* Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded shadow-md w-96 border border-purple-800">
-            <h2 className="text-2xl font-semibold text-center text-purple-500 underline">
-              {editId ? "Update Song" : "Add Song"}
-            </h2>
-
-            <form onSubmit={handleFormSubmit}>
-              {/* Title */}
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  required
-                  className="w-full border px-3 py-1 rounded dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-
-              {/* Duration */}
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Duration
-                </label>
-                <input
-                  type="text"
-                  value={formData.duration}
-                  onChange={(e) =>
-                    setFormData({ ...formData, duration: e.target.value })
-                  }
-                  required
-                  className="w-full border px-3 py-1 rounded dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-
-              {/* Artist ID */}
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Artist ID
-                </label>
-                <input
-                  type="text"
-                  value={formData.artistId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, artistId: e.target.value })
-                  }
-                  required
-                  className="w-full border px-3 py-1 rounded dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-
-              {/* Album ID */}
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Album ID
-                </label>
-                <input
-                  type="text"
-                  value={formData.albumId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, albumId: e.target.value })
-                  }
-                  required
-                  className="w-full border px-3 py-1 rounded dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-
-              {/* Genre ID */}
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Genre ID
-                </label>
-                <input
-                  type="text"
-                  value={formData.genreId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, genreId: e.target.value })
-                  }
-                  required
-                  className="w-full border px-3 py-1 rounded dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-
-              {/* Audio File URL */}
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Audio File URL
-                </label>
-                <input
-                  type="text"
-                  value={formData.fileUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fileUrl: e.target.value })
-                  }
-                  required
-                  className="w-full border px-3 py-1 rounded dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-
-              {/* Song Image Upload */}
-              <div className="mb-4">
-                <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                  Upload Song Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="w-full border px-3 py-1 rounded dark:bg-gray-800 dark:text-white cursor-pointer"
-                  onChange={async (e) => {
-                    const files = Array.from(e.target.files);
-                    const uploadedUrls = [];
-
-                    for (let file of files) {
-                      const fd = new FormData();
-                      fd.append("file", file);
-                      fd.append("upload_preset", "your_upload_preset");
-                      fd.append("folder", "music-app/songs/images");
-
-                      try {
-                        const res = await fetch(
-                          "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload",
-                          { method: "POST", body: fd }
-                        );
-                        const data = await res.json();
-                        uploadedUrls.push(data.secure_url);
-                      } catch (err) {
-                        alert("Image upload failed");
-                      }
+        <div className="fixed inset-0 bg-white/0 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-md w-96 max-h-[90vh] overflow-y-auto border border-purple-500 scrollbar-hide">
+          <h2 className="text-2xl font-semibold text-center text-purple-500 underline">
+            {editId ? "Update Song" : "Add Song"}
+          </h2>
+      
+          <form onSubmit={handleFormSubmit}>
+            {/* Title */}
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">Title</label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                required
+                className="w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+      
+            {/* Duration */}
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">Duration</label>
+              <input
+                type="text"
+                value={formData.duration}
+                onChange={(e) =>
+                  setFormData({ ...formData, duration: e.target.value })
+                }
+                required
+                className="w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+      
+            {/* Artist ID */}
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">Artist ID</label>
+              <input
+                type="text"
+                value={formData.artistId}
+                onChange={(e) =>
+                  setFormData({ ...formData, artistId: e.target.value })
+                }
+                required
+                className="w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+      
+            {/* Album ID */}
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">Album ID</label>
+              <input
+                type="text"
+                value={formData.albumId}
+                onChange={(e) =>
+                  setFormData({ ...formData, albumId: e.target.value })
+                }
+                required
+                className="w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+      
+            {/* Genre ID */}
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">Genre ID</label>
+              <input
+                type="text"
+                value={formData.genreId}
+                onChange={(e) =>
+                  setFormData({ ...formData, genreId: e.target.value })
+                }
+                required
+                className="w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+      
+            {/* Audio File URL */}
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">Audio File URL</label>
+              <input
+                type="text"
+                value={formData.fileUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, fileUrl: e.target.value })
+                }
+                required
+                className="w-full border px-3 py-2 rounded text-black bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+      
+            {/* Song Image Upload */}
+            <div className="mb-4">
+              <label className="block text-sm mb-1 text-black font-semibold">Upload Song Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="w-full border px-3 py-2 rounded text-black bg-white cursor-pointer hover:border-purple-400 transition duration-300"
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files);
+                  const uploadedUrls = [];
+      
+                  for (let file of files) {
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    fd.append("upload_preset", "your_upload_preset");
+                    fd.append("folder", "music-app/songs/images");
+      
+                    try {
+                      const res = await fetch(
+                        "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload",
+                        { method: "POST", body: fd }
+                      );
+                      const data = await res.json();
+                      uploadedUrls.push(data.secure_url);
+                    } catch (err) {
+                      alert("Image upload failed");
                     }
-
-                    setFormData((prev) => ({
-                      ...prev,
-                      songImage: [...prev.songImage, ...uploadedUrls],
-                    }));
-                  }}
-                />
-              </div>
-
-              {/* Submit and Cancel */}
-              <div className="flex justify-between">
-                <button
-                  type="submit"
-                  className="bg-purple-600 text-white px-4 py-2  rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
-                >
-                  {editId ? "Update" : "Add"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+                  }
+      
+                  setFormData((prev) => ({
+                    ...prev,
+                    songImage: [...prev.songImage, ...uploadedUrls],
+                  }));
+                }}
+              />
+            </div>
+      
+            {/* Buttons */}
+            <div className="flex justify-between mt-4">
+              <button
+                type="submit"
+                className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
+              >
+                {editId ? "Update" : "Add"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
+      
       )}
     </div>
   );
