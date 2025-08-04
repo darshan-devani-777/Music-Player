@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Topbar from "./Topbar";
 import {
   FaMusic,
+  FaUser,
   FaHeadphones,
   FaThLarge,
   FaListAlt,
@@ -39,6 +40,7 @@ export default function Sidebar() {
 
   const navItems = [
     { to: "/dashboard", icon: <FaTachometerAlt />, label: "Dashboard" },
+    { to: "/users", icon: <FaUser />, label: "Users" },
     { to: "/artists", icon: <FaHeadphones />, label: "Artists" },
     { to: "/albums", icon: <FaCompactDisc />, label: "Albums" },
     { to: "/playlists", icon: <FaThLarge />, label: "Playlists" },
