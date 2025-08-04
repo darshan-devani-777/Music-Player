@@ -25,7 +25,6 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '30mb' }));
-// app.use(cors({ origin: "http://localhost:5173"}));
 app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 app.use("/uploads", express.static("uploads")); 
 
