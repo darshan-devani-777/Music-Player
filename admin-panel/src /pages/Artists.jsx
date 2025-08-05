@@ -187,10 +187,10 @@ export default function Artists() {
                     )}
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-white">
-                    {artist.name}
+                    {artist.name || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {artist.bio}
+                    {artist.bio || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {artist.createdBy?.name || "Unknown"}

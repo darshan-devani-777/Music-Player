@@ -190,9 +190,11 @@ exports.getAllUsers = async (req, res) => {
 // UPDATE USER
 exports.updateUser = async (req, res) => {
   const { userId } = req.params;
+  const { name, email, role, oldPassword, newPassword, confirmPassword } = req.body;
 
   try {
     const user = await User.findById(userId);
+
     if (!user) {
       return res.status(404).json({
         status: false,
@@ -200,46 +202,82 @@ exports.updateUser = async (req, res) => {
       });
     }
 
+    if (oldPassword || newPassword || confirmPassword) {
+      console.log("✅ Password change requested for user:", user._id);
+      console.log("Old Password:", oldPassword);
+      console.log("New Password:", newPassword);
+      console.log("🔐 Hashed Password from DB:", user.password);
+
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({
+          status: false,
+          message: "All password fields are required",
+        });
+      }
+
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({
+          status: false,
+          message: "Old password is incorrect",
+        });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({
+          status: false,
+          message: "New password and confirm password do not match",
+        });
+      }
+
+      user.password = newPassword;
+
+      await Activity.create({
+        user: req.user._id,
+        action: "Updated_password",
+        targetType: "User",
+        targetId: user._id,
+      });
+    }
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.role = role || user.role;
+
     const updatedUserDetails = {
-      name: req.body.name || user.name,
-      email: req.body.email || user.email,
-      role: req.body.role || user.role,
+      name: user.name,
+      email: user.email,
+      role: user.role,
       loginType: user.loginType,
     };
 
     const { encryptedData, iv, key } = encryptData(updatedUserDetails);
-
     console.log("🔐 Encrypted User Data:", encryptedData);
     console.log("🧊 IV:", iv);
 
     const decrypted = decryptData(encryptedData, iv);
     console.log("✅ Decrypted User Data:", decrypted);
 
-    user.name = updatedUserDetails.name;
-    user.email = updatedUserDetails.email;
-    user.role = updatedUserDetails.role;
-    user.loginType = updatedUserDetails.loginType;
-
     await user.save();
 
-     const currentUserId = req.user._id.toString();
-     const targetUserId = userId.toString();
- 
-     if (req.user.role === "admin" && currentUserId !== targetUserId) {
-       await Activity.create({
-         user: req.user._id, 
-         action: "Updated_role",
-         targetType: "User",
-         targetId: user._id, 
-       });
-     } else {
-       await Activity.create({
-         user: req.user._id,
-         action: "Updated_own_profile",
-         targetType: "User",
-         targetId: user._id,
-       });
-     }
+    const currentUserId = req.user._id.toString();
+    const targetUserId = userId.toString();
+
+    if (req.user.role === "admin" && currentUserId !== targetUserId) {
+      await Activity.create({
+        user: req.user._id,
+        action: "Updated_role",
+        targetType: "User",
+        targetId: user._id,
+      });
+    } else {
+      await Activity.create({
+        user: req.user._id,
+        action: "Updated_own_profile",
+        targetType: "User",
+        targetId: user._id,
+      });
+    }
 
     res.status(200).json({
       status: true,

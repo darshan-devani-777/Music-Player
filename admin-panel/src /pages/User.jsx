@@ -154,16 +154,16 @@ export default function Users() {
                     {(currentPage - 1) * usersPerPage + index + 1}.
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-white">
-                    {user.name}
+                    {user.name || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {user.email}
+                    {user.email || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {user.role}
+                    {user.role || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {user.loginType}
+                    {user.loginType || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {new Date(user.createdAt)
@@ -224,6 +224,8 @@ export default function Users() {
             )}
           </tbody>
         </table>
+      </div>
+      
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-4 space-x-2">
@@ -271,7 +273,6 @@ export default function Users() {
             })}
           </div>
         )}
-      </div>
     </div>
   );
 }

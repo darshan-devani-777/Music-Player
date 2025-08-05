@@ -194,28 +194,30 @@ export default function Songs() {
                     {(currentPage - 1) * songsPerPage + index + 1}.
                   </td>
                   <td className="p-3 border dark:border-gray-600">
-                    {song.songImage?.[0] && (
+                    {song.songImage?.[0] ? (
                       <img
                         src={song.songImage[0]}
                         alt="cover"
                         className="w-16 h-16 object-cover border rounded"
                       />
+                    ): (
+                      <span>No Image</span>
                     )}
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-white">
-                    {song.title}
+                    {song.title || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {song.duration}
+                    {song.duration || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {song.artistId?.name}
+                    {song.artistId?.name || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {song.albumId?.title}
+                    {song.albumId?.title || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {song.genreId?.name}
+                    {song.genreId?.name || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 space-x-2">
                     <button

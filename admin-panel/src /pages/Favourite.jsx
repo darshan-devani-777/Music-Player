@@ -249,13 +249,13 @@ export default function Favourites() {
                     {(currentPage - 1) * perPage + index + 1}.
                   </td>
                   <td className="p-3 border border-gray-700 text-white">
-                    {item.song?.title || "—"}
+                    {item.song?.title || "N/A"}
                   </td>
                   <td className="p-3 border border-gray-700 text-gray-400">
-                    {item.user?.name || "—"}
+                    {item.user?.name || "N/A"}
                   </td>
                   <td className="p-3 border border-gray-700 text-gray-400">
-                    {item.user?.email || "—"}
+                    {item.user?.email || "N/A"}
                   </td>
                   <td className="p-3 border border-gray-700 text-gray-400">
                     {new Date(item.createdAt).toLocaleString("en-IN", {

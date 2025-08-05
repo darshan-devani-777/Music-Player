@@ -221,13 +221,13 @@ export default function Playlists() {
                     )}
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-white">
-                    {playlist.title}
+                    {playlist.title || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {playlist.description}
+                    {playlist.description || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {playlist.albums.map((a) => a.title).join(", ")}
+                    {playlist.albums.map((a) => a.title).join(", ") || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {playlist.createdBy?.name || "Unknown"}

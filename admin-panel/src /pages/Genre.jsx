@@ -185,10 +185,10 @@ export default function Genres() {
                     )}
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-white">
-                    {genre.name}
+                    {genre.name || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {genre.description}
+                    {genre.description || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {genre.createdBy?.name || "Unknown"}

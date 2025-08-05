@@ -192,16 +192,16 @@ export default function Albums() {
                     )}
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-white">
-                    {album.title}
+                    {album.title || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {album.artistId?.name}
+                    {album.artistId?.name || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {new Date(album.releaseDate).toLocaleDateString()}
+                    {new Date(album.releaseDate).toLocaleDateString() || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {album.albumImages.length}
+                    {album.albumImages.length || "N/A" }
                   </td>
                   <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
                     {album.createdBy?.name || "Unknown"}

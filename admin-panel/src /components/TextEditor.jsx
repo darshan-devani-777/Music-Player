@@ -167,7 +167,7 @@ export default function PrimeTextEditor() {
   return (
     <div className="max-w-full mx-auto p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
       <h2 className="text-xl font-semibold text-gray-800 underline mb-5">
-      ✍️ Text Editor
+        ✍️ Text Editor
       </h2>
 
       {/* Toolbar */}
@@ -326,11 +326,12 @@ export default function PrimeTextEditor() {
         </div>
       )}
 
+      {/* Text Editor */}
       <div
-        className="DraftEditor-root min-h-[200px] border border-gray-300 text-sm p-4 rounded bg-white focus-within:ring-1 focus-within:ring-blue-400"
+        className="DraftEditor-root min-h-[200px] border border-gray-300 text-sm p-4 rounded bg-white focus-within:ring-1 focus-within:ring-blue-400 overflow-x-auto"
         onClick={focusEditor}
       >
-        <div className="public-DraftEditor-content">
+        <div className="public-DraftEditor-content break-words whitespace-pre-wrap break-all">
           <Editor
             ref={editorRef}
             editorState={editorState}

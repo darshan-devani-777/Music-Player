@@ -43,10 +43,16 @@ exports.updateUserValidation = [
   (req, res, next) => {
     const currentUser = req.user;
     const sentFields = Object.keys(req.body);
+    const isSelf = currentUser._id.toString() === req.params.userId.toString();
+
+    const passwordFields = ["oldPassword", "newPassword", "confirmPassword"];
+    const hasPasswordFields = passwordFields.some((field) =>
+      sentFields.includes(field)
+    );
 
     if (currentUser.role === "admin") {
-      if (currentUser._id.toString() === req.params.userId.toString()) {
-        const allowedFields = ["name", "email", "role"];
+      if (isSelf) {
+        const allowedFields = ["name", "email", "role", ...passwordFields];
         const invalidFields = sentFields.filter(
           (field) => !allowedFields.includes(field)
         );
@@ -54,9 +60,7 @@ exports.updateUserValidation = [
         if (invalidFields.length > 0) {
           return res.status(400).json({
             status: false,
-            message: `Admin can update only 'name', 'email', and 'role'. Invalid field(s): ${invalidFields.join(
-              ", "
-            )}`,
+            message: `Admin can update only 'name', 'email', 'role', or password fields for themselves. Invalid field(s): ${invalidFields.join(", ")}`,
           });
         }
       } else {
@@ -68,21 +72,21 @@ exports.updateUserValidation = [
         if (invalidFields.length > 0) {
           return res.status(400).json({
             status: false,
-            message: `Admin can only update 'role' for other users. Invalid field(s): ${invalidFields.join(
-              ", "
-            )}`,
+            message: `Admin can only update 'role' for other users. Invalid field(s): ${invalidFields.join(", ")}`,
           });
         }
       }
-    } else {
-      if (currentUser._id.toString() !== req.params.userId.toString()) {
+    }
+
+    else {
+      if (!isSelf) {
         return res.status(403).json({
           status: false,
           message: "You are not allowed to update other users",
         });
       }
 
-      const allowedFields = ["name", "email"];
+      const allowedFields = ["name", "email", ...passwordFields];
       const invalidFields = sentFields.filter(
         (field) => !allowedFields.includes(field)
       );
@@ -90,9 +94,20 @@ exports.updateUserValidation = [
       if (invalidFields.length > 0) {
         return res.status(400).json({
           status: false,
-          message: `You can only update 'name' or 'email'. Invalid field(s): ${invalidFields.join(
-            ", "
-          )}`,
+          message: `You can only update 'name', 'email', or password fields. Invalid field(s): ${invalidFields.join(", ")}`,
+        });
+      }
+    }
+
+    if (hasPasswordFields) {
+      const missingFields = passwordFields.filter(
+        (field) => !req.body[field]
+      );
+
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          status: false,
+          message: `Missing password field(s): ${missingFields.join(", ")}`,
         });
       }
     }
@@ -115,6 +130,29 @@ exports.updateUserValidation = [
     .withMessage("Role cannot be empty")
     .isIn(["user", "admin"])
     .withMessage("Role must be either 'user' or 'admin'"),
+
+  body("oldPassword")
+    .optional()
+    .notEmpty()
+    .withMessage("Old password cannot be empty"),
+
+  body("newPassword")
+    .optional()
+    .notEmpty()
+    .withMessage("New password cannot be empty")
+    .isLength({ min: 6 })
+    .withMessage("New password must be at least 6 characters long"),
+
+  body("confirmPassword")
+    .optional()
+    .notEmpty()
+    .withMessage("Confirm password cannot be empty")
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error("Confirm password must match new password");
+      }
+      return true;
+    }),
 ];
 
 // FORGOT PASSWORD

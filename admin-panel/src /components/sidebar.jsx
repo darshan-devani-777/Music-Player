@@ -50,18 +50,29 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="flex w-full min-h-screen">
+    <div className="flex min-h-screen w-full overflow-hidden">
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-screen bg-gray-900 text-white shadow-lg z-50 flex flex-col transition-all duration-300 ${
-          isCollapsed ? "w-20 items-center" : "w-64 items-start"
-        }`}
+        className={`
+    fixed top-0 left-0 z-40 bg-gray-900 text-white shadow-lg
+    transition-transform duration-300
+    ${isCollapsed ? "w-20" : "w-64"}
+    sm:translate-x-0
+    min-h-screen
+    flex flex-col
+  `}
       >
-        {/* Collapse Button & Title */}
+        {/* Top - Collapse + Title */}
         <div className={`w-full ${isCollapsed ? "py-4" : "p-4"}`}>
-          <div className={`flex w-full ${isCollapsed ? "justify-center" : "justify-between items-center"}`}>
+          <div
+            className={`flex w-full ${
+              isCollapsed ? "justify-center" : "justify-between items-center"
+            }`}
+          >
             {!isCollapsed && (
-              <h1 className="text-2xl font-semibold text-purple-400 underline">Admin Panel</h1>
+              <h1 className="text-2xl font-semibold text-purple-400 underline">
+                Admin Panel
+              </h1>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -73,10 +84,10 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Navigation Menu */}
+        {/* Middle - Scrollable Nav */}
         <div
           ref={scrollRef}
-          className="flex-1 w-full overflow-y-auto mt-8 scrollbar-thin scrollbar-thumb-gray-700"
+          className="flex-1 w-full overflow-y-auto mt-4 scrollbar-thin scrollbar-thumb-gray-700"
         >
           <div
             className={`flex flex-col gap-2 w-full transition-all ${
@@ -84,7 +95,11 @@ export default function Sidebar() {
             }`}
           >
             {navItems.map(({ to, icon, label }, i) => (
-              <NavLink key={i} to={to} className={(props) => linkClass(props, to)}>
+              <NavLink
+                key={i}
+                to={to}
+                className={(props) => linkClass(props, to)}
+              >
                 {icon}
                 {isCollapsed ? (
                   <span className="text-[10px] mt-1 text-center">{label}</span>
@@ -96,8 +111,8 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Logout Button */}
-        <div className="p-4 w-full">
+        {/* Bottom - Logout Button */}
+        <div className="w-full p-4">
           <button
             className={`flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition w-full cursor-pointer ${
               isCollapsed ? "justify-center px-2" : "justify-center"
@@ -115,10 +130,15 @@ export default function Sidebar() {
       </aside>
 
       {/* Main Area */}
-      <div className={`flex-1 ${isCollapsed ? "ml-20" : "ml-64"} transition-all duration-300`}>
-        <div className="bg-gray-100 min-h-screen">
+      <div
+        className={`
+    flex-1 w-full min-w-0 transition-all duration-300
+    ${isCollapsed ? "ml-20" : "ml-64"}
+  `}
+      >
+        <div className="bg-gray-100 min-h-screen flex flex-col">
           <Topbar user={user} isCollapsed={isCollapsed} />
-          <main className="pt-20 p-4 overflow-y-auto min-h-screen">
+          <main className="pt-20 p-4 flex-1 overflow-y-auto">
             <Outlet />
           </main>
         </div>

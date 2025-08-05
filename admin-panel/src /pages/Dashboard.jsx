@@ -227,8 +227,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Banner */}
+    <div className="space-y-8 px-2 sm:px-4">
       <style>
         {`
           @keyframes scroll-right {
@@ -237,11 +236,11 @@ export default function Dashboard() {
           }
         `}
       </style>
-  
-      <div className="flex justify-center sm:justify-between gap-4 p-2 sm:p-4 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
+
+      <div className="flex flex-wrap justify-center sm:justify-between gap-4 p-2 sm:p-4 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
         <div
           className="flex gap-3 animate-[scroll-right_10s_linear_infinite]"
-          style={{ whiteSpace: "nowrap" }}
+          style={{ whiteSpace: 'nowrap' }}
         >
           <div className="text-2xl sm:text-3xl mt-1">🚀</div>
           <div>
@@ -252,8 +251,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-  
-      {/* Stats Cards */}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {cards.map((card, idx) => (
           <div
@@ -271,8 +269,7 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-  
-      {/* Latest Activities */}
+
       <div>
         <h3 className="text-lg sm:text-xl font-semibold text-gray-800 underline">
           🕒 Latest Activities
@@ -295,13 +292,13 @@ export default function Dashboard() {
                   className="border-b border-gray-700 cursor-pointer dark:hover:bg-gray-800"
                 >
                   <td className="px-4 sm:px-6 py-4 border-r border-gray-700 text-white text-[14px] sm:text-[15px]">
-                    {item.user?.name || "Unknown"}
+                    {item.user?.name || 'Unknown'}
                   </td>
                   <td className="px-4 sm:px-6 py-4 border-r border-gray-700">
-                    {item.user?.email || "N/A"}
+                    {item.user?.email || 'N/A'}
                   </td>
                   <td className="px-4 sm:px-6 py-4 border-r border-gray-700 capitalize">
-                    {item.action.replaceAll("_", " ")}
+                    {item.action.replaceAll('_', ' ')}
                   </td>
                   <td className="px-4 sm:px-6 py-4 border-r border-gray-700">
                     {item.targetType}
@@ -309,12 +306,12 @@ export default function Dashboard() {
                   <td className="px-4 sm:px-6 py-4 text-gray-400">
                     {(() => {
                       const date = new Date(item.createdAt);
-                      const day = String(date.getDate()).padStart(2, "0");
-                      const month = String(date.getMonth() + 1).padStart(2, "0");
+                      const day = String(date.getDate()).padStart(2, '0');
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
                       const year = date.getFullYear();
                       let hours = date.getHours();
-                      const minutes = String(date.getMinutes()).padStart(2, "0");
-                      const ampm = hours >= 12 ? "PM" : "AM";
+                      const minutes = String(date.getMinutes()).padStart(2, '0');
+                      const ampm = hours >= 12 ? 'PM' : 'AM';
                       hours = hours % 12 || 12;
                       return `${day}/${month}/${year} , ${hours}:${minutes} ${ampm}`;
                     })()}
@@ -332,8 +329,7 @@ export default function Dashboard() {
           </table>
         </div>
       </div>
-  
-      {/* Chart Section */}
+
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
         <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 underline">
           📈 User Growth
@@ -344,15 +340,15 @@ export default function Dashboard() {
           <p className="text-gray-600">Loading chart...</p>
         )}
       </div>
-  
-      {/* Text Editor */}
+
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
         <TextEditor />
       </div>
 
-      <div className="">
-        <Faq/>
+      <div>
+        <Faq />
       </div>
     </div>
-  ); 
-}
+  );
+};
+
