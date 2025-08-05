@@ -39,10 +39,7 @@ export default function Topbar({ user, isCollapsed }) {
       console.log("unseen-count response:", res?.data);
 
       const cnt =
-        res?.data?.count ??
-        res?.data?.data?.count ??
-        res?.data?.unseen ??
-        0;
+        res?.data?.count ?? res?.data?.data?.count ?? res?.data?.unseen ?? 0;
 
       setNotificationCount(Number(cnt) || 0);
     } catch (err) {
@@ -98,20 +95,18 @@ export default function Topbar({ user, isCollapsed }) {
 
       const res = await api.get("/auth/activities/recent");
       const allActivities = res?.data?.data ?? res?.data ?? [];
-      console.log("recent activities:", allActivities);
-      setActivities(allActivities);
+
+      const unseenActivities = allActivities.filter((a) => !a.seen);
+
+      setActivities(unseenActivities);
 
       setNotificationCount(0);
 
-      const idsToMark = (allActivities || [])
-        .slice(0, 5)
-        .map((a) => a._id)
-        .filter(Boolean);
+      const idsToMark = unseenActivities.map((a) => a._id).filter(Boolean);
 
       if (idsToMark.length > 0) {
         try {
           await api.post("/auth/activities/mark-as-seen", { ids: idsToMark });
-          
           await fetchUnseenCount();
         } catch (err) {
           console.warn("mark-seen failed, keeping optimistic UI:", err);
@@ -178,7 +173,7 @@ export default function Topbar({ user, isCollapsed }) {
                   </div>
                 ) : (
                   <ul className="divide-y divide-gray-100">
-                    {activities.slice(0, 5).map((act, idx) => (
+                    {activities.map((act, idx) => (
                       <li
                         key={act._id || idx}
                         className="px-3 py-1 text-xs hover:bg-gray-50 transition-colors duration-150 flex items-start gap-2"
