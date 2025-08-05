@@ -239,7 +239,7 @@ export default function Dashboard() {
 
       <div className="flex flex-wrap justify-center sm:justify-between gap-4 p-2 sm:p-4 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
         <div
-          className="flex gap-3 animate-[scroll-right_10s_linear_infinite]"
+          className="flex gap-3 animate-[scroll-right_7s_linear_infinite]"
           style={{ whiteSpace: 'nowrap' }}
         >
           <div className="text-2xl sm:text-3xl mt-1">🚀</div>
