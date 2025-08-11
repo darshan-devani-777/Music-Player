@@ -327,7 +327,7 @@ export default function Topbar({ isCollapsed }) {
       {showProfileModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="w-full h-full flex items-center justify-center">
-            <div className="p-6 w-[90%] max-w-md text-center relative bg-gray-900 rounded-xl shadow-2xl border border-gray-700">
+            <div className="p-6 w-[90%] max-w-md text-center relative bg-gray-900 rounded-xl shadow-2xl border-1 border-purple-700">
               <h3 className="text-xl font-semibold text-white underline decoration-purple-400 mb-6">
                 View Profile
               </h3>
