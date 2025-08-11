@@ -105,167 +105,179 @@ export default function Favourites() {
 
   return (
     <div className="">
-      <h2 className="text-2xl font-semibold underline">
-        Favourite Management
-      </h2>
+      <h2 className="text-2xl font-semibold underline">Favourite Management</h2>
 
-      {/* Tab Buttons */}
-      <div className="flex flex-wrap gap-3 my-7">
-        {/* All Favourites */}
-        <button
-          onClick={() => {
-            setActiveTab("all");
-            setUserId("");
-            setSongId("");
-            setUserFavourites([]);
-            setSongFavourites([]);
-          }}
-          className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
-            activeTab === "all"
-              ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow transition duration-300 cursor-pointer"
-              : "bg-gray-100 text-gray-800 hover:bg-gray-300 cursor-pointer transition duration-300"
-          }`}
-        >
-          All Favourites
-        </button>
+      <div className="flex flex-wrap justify-between items-center gap-3 my-7">
+        <div className="flex flex-wrap gap-3">
+          {/* All Favourites */}
+          <button
+            onClick={() => {
+              setActiveTab("all");
+              setUserId("");
+              setSongId("");
+              setUserFavourites([]);
+              setSongFavourites([]);
+            }}
+            className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
+              activeTab === "all"
+                ? "bg-purple-600 hover:bg-purple-700 text-white shadow transition duration-300 cursor-pointer"
+                : "bg-gray-100 text-gray-800 hover:bg-gray-300 cursor-pointer transition duration-300"
+            }`}
+          >
+            All Favourites
+          </button>
 
-        {/* By User ID */}
-        <button
-          onClick={() => {
-            setActiveTab("user");
-            setSongId("");
-            setAllFavourites([]);
-            setSongFavourites([]);
-            setUserFavourites([]);
-            setUserId("");
-          }}
-          className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
-            activeTab === "user"
-              ? "bg-green-600 hover:bg-green-700 text-white shadow transition duration-300 cursor-pointer"
-              : "bg-gray-100 text-gray-800 hover:bg-gray-300 cursor-pointer transition duration-300"
-          }`}
-        >
-          By User ID
-        </button>
+          {/* By User ID */}
+          <button
+            onClick={() => {
+              setActiveTab("user");
+              setSongId("");
+              setAllFavourites([]);
+              setSongFavourites([]);
+              setUserFavourites([]);
+              setUserId("");
+            }}
+            className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
+              activeTab === "user"
+                ? "bg-green-600 hover:bg-green-700 text-white shadow transition duration-300 cursor-pointer"
+                : "bg-gray-100 text-gray-800 hover:bg-gray-300 cursor-pointer transition duration-300"
+            }`}
+          >
+            By User ID
+          </button>
 
-        {/* By Song ID */}
-        <button
-          onClick={() => {
-            setActiveTab("song");
-            setUserId("");
-            setAllFavourites([]);
-            setUserFavourites([]);
-            setSongFavourites([]);
-            setSongId("");
-          }}
-          className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
-            activeTab === "song"
-              ? "bg-purple-600 hover:bg-purple-700 transition duration-300 cursor-pointer text-white shadow"
-              : "bg-gray-100 text-gray-800 hover:bg-gray-300 cursor-pointer transition duration-300"
-          }`}
-        >
-          By Song ID
-        </button>
-      </div>
+          {/* By Song ID */}
+          <button
+            onClick={() => {
+              setActiveTab("song");
+              setUserId("");
+              setAllFavourites([]);
+              setUserFavourites([]);
+              setSongFavourites([]);
+              setSongId("");
+            }}
+            className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
+              activeTab === "song"
+                ? "bg-blue-600 hover:bg-blue-700 transition duration-300 cursor-pointer text-white shadow"
+                : "bg-gray-100 text-gray-800 hover:bg-gray-300 cursor-pointer transition duration-300"
+            }`}
+          >
+            By Song ID
+          </button>
+        </div>
 
-      {/* Search Input */}
-      <div className="flex items-center gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Search by song, user, or email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
-        />
+        {/* Search Bar */}
+        <div className="justify-self-center w-full relative max-w-sm">
+          <span className="absolute inset-y-0 left-3 flex items-center pr-3 border-r border-gray-300 text-gray-500">
+            🔍
+          </span>
+          <input
+            type="text"
+            placeholder="Search by song, user, or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-14 pr-3 py-2 text-sm rounded border border-gray-300 focus:outline-none focus:border-purple-400 !placeholder:text-gray-100"
+          />
+        </div>
       </div>
 
       {/* User ID Input */}
       {activeTab === "user" && (
-        <div className="flex items-center gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Enter User ID"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 transition text-sm"
-          />
-          <button
-            onClick={fetchFavouritesByUser}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition duration-300 cursor-pointer"
-          >
-            Search
-          </button>
+        <div className="flex flex-col gap-1 mb-1">
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              placeholder="Enter User ID"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              className={`flex-1 px-4 py-1 border rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 transition text-[13px] ${
+                error ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+              }`}
+            />
+            <button
+              onClick={fetchFavouritesByUser}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition duration-300 cursor-pointer"
+            >
+              Search
+            </button>
+          </div>
+          {/* Error message below input */}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
         </div>
       )}
 
       {/* Song ID Input */}
       {activeTab === "song" && (
-        <div className="flex items-center gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Enter Song ID"
-            value={songId}
-            onChange={(e) => setSongId(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 transition text-sm"
-          />
-          <button
-            onClick={fetchUsersBySong}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition duration-300 cursor-pointer"
-          >
-            Search
-          </button>
+        <div className="flex flex-col gap-1 mb-1">
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              placeholder="Enter Song ID"
+              value={songId}
+              onChange={(e) => setSongId(e.target.value)}
+              className={`flex-1 px-4 py-1 border rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 transition text-[13px] ${
+                error ? "border-red-500 focus:ring-red-500" : "border-gray-300"
+              }`}
+            />
+            <button
+              onClick={fetchUsersBySong}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition duration-300 cursor-pointer"
+            >
+              Search
+            </button>
+          </div>
+          {/* Error message below input */}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
         </div>
       )}
 
-      {error && <p className="text-red-600 mb-2">{error}</p>}
-      {loading && <p className="text-blue-500 mb-2">Loading...</p>}
-
       {/* Table */}
-      <div className="overflow-x-auto bg-gray-900 rounded-xl">
-        <table className="w-full text-sm text-left border border-gray-700 rounded-lg overflow-hidden">
-          <thead className="bg-gray-800 text-white uppercase text-xs">
-            <tr>
-              <th className="p-3 border dark:border-gray-600">ID</th>
-              <th className="p-3 border border-gray-700">Song</th>
-              <th className="p-3 border border-gray-700">User</th>
-              <th className="p-3 border border-gray-700">Email</th>
-              <th className="p-3 border border-gray-700">Date</th>
+      <div className="overflow-hidden rounded-lg shadow-lg border border-gray-300 mt-4">
+        <table className="min-w-full bg-white border border-gray-300">
+          <thead className="uppercase text-xs">
+            <tr className="bg-gray-200 text-left text-gray-700">
+              <th className="p-3 border border-gray-300">ID</th>
+              <th className="p-3 border border-gray-300">Song</th>
+              <th className="p-3 border border-gray-300">User</th>
+              <th className="p-3 border border-gray-300">Email</th>
+              <th className="p-3 border border-gray-300">Date</th>
             </tr>
           </thead>
-          <tbody className="text-gray-300">
+          <tbody className="text-gray-700">
             {currentList.length === 0 ? (
               <tr>
-                <td
-                  colSpan="4"
-                  className="p-4 text-center text-gray-500 dark:text-gray-400"
-                >
+                <td colSpan="5" className="p-4 text-center text-gray-500">
                   Favourites Not Found.
                 </td>
               </tr>
             ) : (
               currentList.map((item, index) => (
-                <tr key={item._id} className="hover:bg-gray-800 transition">
-                  <td className="p-3 border dark:border-gray-600 text-white text-sm">
+                <tr key={item._id} className="hover:bg-gray-100 cursor-pointer">
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
                     {(currentPage - 1) * perPage + index + 1}.
                   </td>
-                  <td className="p-3 border border-gray-700 text-white">
+                  <td className="p-3 border border-gray-300 text-gray-900">
                     {item.song?.title || "N/A"}
                   </td>
-                  <td className="p-3 border border-gray-700 text-gray-400">
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
                     {item.user?.name || "N/A"}
                   </td>
-                  <td className="p-3 border border-gray-700 text-gray-400">
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
                     {item.user?.email || "N/A"}
                   </td>
-                  <td className="p-3 border border-gray-700 text-gray-400">
-                    {new Date(item.createdAt).toLocaleString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
+                    {item.createdAt
+                      ? new Date(item.createdAt)
+                          .toLocaleString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                          .replace(",", " ,")
+                      : "N/A"}
                   </td>
                 </tr>
               ))
@@ -273,6 +285,7 @@ export default function Favourites() {
           </tbody>
         </table>
       </div>
+
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 mt-6">

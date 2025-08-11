@@ -211,6 +211,8 @@ exports.updatePlaylist = async (req, res) => {
 // DELETE PLAYLIST
 exports.deletePlaylist = async (req, res) => {
   try {
+    const userId = req.user._id;  // <-- get user id from authenticated request
+
     const deleted = await Playlist.findByIdAndDelete(req.params.id)
       .populate("createdBy", "_id name email")
       .populate("albums", "_id title artistId releaseDate albumImages")
@@ -236,9 +238,11 @@ exports.deletePlaylist = async (req, res) => {
       data: deleted,
     });
   } catch (err) {
+    console.error(err);  // Add logging to debug errors
     res.status(500).json({
       status: "error",
       message: "Failed to delete playlist",
     });
   }
 };
+

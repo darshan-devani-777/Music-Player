@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Topbar from "./Topbar";
+import { toast } from "react-toastify";
+
 import {
   FaMusic,
   FaUser,
@@ -9,6 +11,8 @@ import {
   FaListAlt,
   FaCompactDisc,
   FaHeart,
+  FaEdit,
+  FaQuestionCircle,
   FaSignOutAlt,
   FaTachometerAlt,
   FaAngleDoubleLeft,
@@ -47,6 +51,8 @@ export default function Sidebar() {
     { to: "/genres", icon: <FaListAlt />, label: "Genres" },
     { to: "/songs", icon: <FaMusic />, label: "Songs" },
     { to: "/favourites", icon: <FaHeart />, label: "Favourites" },
+    { to: "/text-editor", icon: <FaEdit />, label: "Text Editor" },
+    { to: "/faq", icon: <FaQuestionCircle />, label: "FAQ" },
   ];
 
   return (
@@ -54,15 +60,13 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-    fixed top-0 left-0 z-40 bg-gray-900 text-white shadow-lg
-    transition-transform duration-300
+    fixed inset-y-0 left-0 z-40 bg-gray-900 text-white shadow-lg
+    transition-all duration-300
     ${isCollapsed ? "w-20" : "w-64"}
-    sm:translate-x-0
-    min-h-screen
-    flex flex-col
+    h-screen flex flex-col justify-between
   `}
       >
-        {/* Top - Collapse + Title */}
+        {/* Collapse + Title */}
         <div className={`w-full ${isCollapsed ? "py-4" : "p-4"}`}>
           <div
             className={`flex w-full ${
@@ -84,34 +88,29 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Middle - Scrollable Nav */}
+        {/* Nav Items */}
         <div
-          ref={scrollRef}
-          className="flex-1 w-full overflow-y-auto mt-4 scrollbar-thin scrollbar-thumb-gray-700"
+          className={`flex flex-col gap-2 w-full ${
+            isCollapsed ? "items-center" : "items-start px-2"
+          }`}
         >
-          <div
-            className={`flex flex-col gap-2 w-full transition-all ${
-              isCollapsed ? "items-center" : "items-start px-2"
-            }`}
-          >
-            {navItems.map(({ to, icon, label }, i) => (
-              <NavLink
-                key={i}
-                to={to}
-                className={(props) => linkClass(props, to)}
-              >
-                {icon}
-                {isCollapsed ? (
-                  <span className="text-[10px] mt-1 text-center">{label}</span>
-                ) : (
-                  <span className="ml-2">{label}</span>
-                )}
-              </NavLink>
-            ))}
-          </div>
+          {navItems.map(({ to, icon, label }, i) => (
+            <NavLink
+              key={i}
+              to={to}
+              className={(props) => linkClass(props, to)}
+            >
+              {icon}
+              {isCollapsed ? (
+                <span className="text-[10px] mt-1 text-center">{label}</span>
+              ) : (
+                <span className="ml-2">{label}</span>
+              )}
+            </NavLink>
+          ))}
         </div>
 
-        {/* Bottom - Logout Button */}
+        {/* Logout Button */}
         <div className="w-full p-4">
           <button
             className={`flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition w-full cursor-pointer ${
@@ -120,7 +119,12 @@ export default function Sidebar() {
             onClick={() => {
               localStorage.removeItem("token");
               localStorage.removeItem("user");
-              window.location.href = "/login";
+
+              toast.success("Logged out successfully...!");
+
+              setTimeout(() => {
+                window.location.href = "/login";
+              }, 1000);
             }}
           >
             <FaSignOutAlt />
@@ -132,13 +136,13 @@ export default function Sidebar() {
       {/* Main Area */}
       <div
         className={`
-    flex-1 w-full min-w-0 transition-all duration-300
-    ${isCollapsed ? "ml-20" : "ml-64"}
-  `}
+          flex-1 w-full min-w-0 transition-all duration-300
+          ${isCollapsed ? "ml-20" : "ml-64"}
+        `}
       >
         <div className="bg-gray-100 min-h-screen flex flex-col">
           <Topbar user={user} isCollapsed={isCollapsed} />
-          <main className="pt-20 p-4 flex-1 overflow-y-auto">
+          <main className="pt-23 p-5 flex-1 overflow-y-auto">
             <Outlet />
           </main>
         </div>

@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   FaUser,
   FaBell,
@@ -10,13 +12,19 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
-export default function Topbar({ user, isCollapsed }) {
+export default function Topbar({ isCollapsed }) {
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
   const [showDropdown, setShowDropdown] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [notificationCount, setNotificationCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [activities, setActivities] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
@@ -33,11 +41,37 @@ export default function Topbar({ user, isCollapsed }) {
 
   const isDashboard = location.pathname === "/";
 
+  useEffect(() => {
+    const syncUserFromLocalStorage = () => {
+      const storedUser = localStorage.getItem("user");
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+      if (
+        parsedUser &&
+        location.pathname.startsWith("/admin") &&
+        parsedUser.role !== "admin"
+      ) {
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
+
+      setUser(parsedUser);
+    };
+
+    syncUserFromLocalStorage();
+    window.addEventListener("storage", syncUserFromLocalStorage);
+
+    return () => {
+      window.removeEventListener("storage", syncUserFromLocalStorage);
+    };
+  }, [location.pathname]);
+
+  // UNSEEN COUNT
   const fetchUnseenCount = async () => {
     try {
       const res = await api.get("/auth/activities/unseen-count");
-      console.log("unseen-count response:", res?.data);
-
       const cnt =
         res?.data?.count ?? res?.data?.data?.count ?? res?.data?.unseen ?? 0;
 
@@ -86,6 +120,7 @@ export default function Topbar({ user, isCollapsed }) {
     };
   }, []);
 
+  // RECENT ACTIVITY / SEEN COUNT
   const handleBellClick = async () => {
     try {
       const isOpening = !showNotifications;
@@ -97,7 +132,6 @@ export default function Topbar({ user, isCollapsed }) {
       const allActivities = res?.data?.data ?? res?.data ?? [];
 
       const unseenActivities = allActivities.filter((a) => !a.seen);
-
       setActivities(unseenActivities);
 
       setNotificationCount(0);
@@ -117,6 +151,18 @@ export default function Topbar({ user, isCollapsed }) {
     } catch (err) {
       console.error("Error loading notifications", err);
     }
+  };
+
+  // LOGOUT
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    toast.success("Logged out successfully...!");
+
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 2000);
   };
 
   return (
@@ -160,7 +206,7 @@ export default function Topbar({ user, isCollapsed }) {
 
             {/* Notification Dropdown */}
             {showNotifications && (
-              <div className="absolute -right-32 top-8 mt-2 w-64 bg-white rounded-lg shadow-md ring-1 ring-black ring-opacity-5 z-50 max-h-72 overflow-y-auto">
+              <div className="fixed top-[56px] right-1 mt-2 w-64 bg-white rounded-lg shadow-md ring-1 ring-black ring-opacity-5 z-50 max-h-72 overflow-y-auto">
                 <div className="px-3 py-1 border-b bg-gray-200 flex items-center justify-center">
                   <h3 className="text-[12px] font-semibold text-red-600 underline">
                     Recent Activities
@@ -187,7 +233,6 @@ export default function Topbar({ user, isCollapsed }) {
                             <span className="font-medium text-gray-900 truncate text-[10px]">
                               {act?.user?.name || "Unknown"}
                             </span>
-
                             {act?.action && (
                               <span className="ml-2 text-[9px] font-semibold text-indigo-500 uppercase tracking-wide whitespace-nowrap">
                                 {act.action.replace(/_/g, " ")}
@@ -242,7 +287,7 @@ export default function Topbar({ user, isCollapsed }) {
 
             {/* Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute -right-4 mt-4 w-36 bg-gray-900 text-white rounded shadow-lg z-50 p-1">
+              <div className="fixed top-[52px] right-0 w-36 bg-gray-900 text-white rounded shadow-lg z-50 p-1">
                 <div
                   className="px-4 py-2 hover:text-blue-300 cursor-pointer text-sm flex items-center gap-2"
                   onClick={() => {
@@ -267,11 +312,7 @@ export default function Topbar({ user, isCollapsed }) {
 
                 <div
                   className="px-4 py-2 cursor-pointer text-red-400 hover:text-red-600 text-sm flex items-center gap-2"
-                  onClick={() => {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("user");
-                    window.location.href = "/login";
-                  }}
+                  onClick={handleLogout}
                 >
                   <FaSignOutAlt className="text-base" />
                   Logout
@@ -284,32 +325,184 @@ export default function Topbar({ user, isCollapsed }) {
 
       {/* Profile Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center border-2 border-purple-400">
-            <div className="flex justify-center mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="p-6 w-[90%] max-w-md text-center relative bg-gray-900 rounded-xl shadow-2xl border border-gray-700">
+              <h3 className="text-xl font-semibold text-white underline decoration-purple-400 mb-6">
+                View Profile
+              </h3>
+
               <img
                 src={avatarUrl}
                 alt="User"
-                className="w-24 h-24 rounded-full border-4 border-purple-600 shadow-lg"
+                className="w-24 h-24 rounded-full border-4 border-purple-500 shadow-lg mx-auto mb-7"
               />
+
+              {!isEditing ? (
+                // View Mode
+                <div className="space-y-4 text">
+                  <div>
+                    <label className="block font-medium text-purple-400">
+                      Name
+                    </label>
+                    <p className="text-sm text-gray-200">{user?.name}</p>
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-purple-400">
+                      Email
+                    </label>
+                    <p className="text-sm text-gray-200">{user?.email}</p>
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-purple-400">
+                      Password
+                    </label>
+                    <p className="text-gray-300 italic text-sm">••••••••</p>
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-purple-400">
+                      Role
+                    </label>
+                    <p className="text-sm font-semibold capitalize text-green-400">
+                      {user?.role}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                // Edit Mode
+                <div className="space-y-3 text-left">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={user?.name || ""}
+                      onChange={(e) =>
+                        setUser((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm text-sm bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={user?.email || ""}
+                      onChange={(e) =>
+                        setUser((prev) => ({ ...prev, email: e.target.value }))
+                      }
+                      className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm text-sm bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">
+                      Password{" "}
+                      <span className="text-xs text-gray-500">(optional)</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={user?.password || ""}
+                      onChange={(e) =>
+                        setUser((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      placeholder="New password"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm text-sm bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">
+                      Role
+                    </label>
+                    <select
+                      value={user?.role || ""}
+                      onChange={(e) =>
+                        setUser((prev) => ({ ...prev, role: e.target.value }))
+                      }
+                      className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm text-sm bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    >
+                      <option value="">Select role</option>
+                      <option value="admin">Admin</option>
+                      <option value="user">User</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Buttons */}
+              <div className="flex justify-between items-center mt-6 gap-3">
+                <button
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm transition duration-300 cursor-pointer"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setShowProfileModal(false);
+                  }}
+                >
+                  Cancel
+                </button>
+
+                {!isEditing ? (
+                  <button
+                    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm transition duration-300 cursor-pointer"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit Profile
+                  </button>
+                ) : (
+                  <button
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm transition duration-300 cursor-pointer"
+                    onClick={async () => {
+                      try {
+                        const token = localStorage.getItem("token");
+                        const payload = {
+                          name: user.name,
+                          email: user.email,
+                          role: user.role,
+                        };
+                        if (user.password && user.password.trim() !== "") {
+                          payload.password = user.password;
+                        }
+
+                        const res = await api.put(
+                          `/auth/users/update-user/${user._id}`,
+                          payload,
+                          {
+                            headers: { Authorization: `Bearer ${token}` },
+                          }
+                        );
+
+                        const updatedUser = { ...user, password: undefined };
+                        localStorage.setItem(
+                          "user",
+                          JSON.stringify(updatedUser)
+                        );
+                        window.dispatchEvent(new Event("storage"));
+
+                        toast.success("Profile updated successfully...!");
+                        setIsEditing(false);
+                        setShowProfileModal(false);
+                      } catch (err) {
+                        console.error("Failed to update profile:", err);
+                        toast.error("Error updating profile.");
+                      }
+                    }}
+                  >
+                    Save Changes
+                  </button>
+                )}
+              </div>
             </div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-1">
-              {user?.name || "User Name"}
-            </h2>
-            <p className="text-sm text-gray-600">
-              <strong className="text-purple-600 text-md">Role:</strong>{" "}
-              {user?.role || "N/A"}
-            </p>
-            <p className="text-sm text-gray-600 mb-4">
-              <strong className="text-purple-600 text-md">Email:</strong>{" "}
-              {user?.email || "user@example.com"}
-            </p>
-            <button
-              className="mt-2 px-4 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600 transition duration-300 cursor-pointer"
-              onClick={() => setShowProfileModal(false)}
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}

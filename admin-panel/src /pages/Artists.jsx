@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../api/axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Artists() {
   const [artists, setArtists] = useState([]);
@@ -11,10 +13,28 @@ export default function Artists() {
   });
   const [editId, setEditId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [errors, setErrors] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const artistsPerPage = 7;
 
   const token = localStorage.getItem("token");
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required.";
+    }
+    if (!formData.bio.trim()) {
+      newErrors.bio = "Bio is required.";
+    }
+    if (!editId && !formData.artistImage) {
+      newErrors.artistImage = "Image is required.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // FETCH ARTIST
   const fetchArtists = async () => {
@@ -24,31 +44,38 @@ export default function Artists() {
       });
       setArtists(res.data.data);
     } catch (err) {
-      alert("Failed to fetch artists");
+      toast.error("Failed to fetch artists.");
     }
   };
 
   // DELETE ARTIST
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this artist?")) return;
+
     try {
       await api.delete(`auth/artist/delete-artist/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      toast.success("Artist deleted successfully...");
       fetchArtists();
     } catch (err) {
-      alert("Failed to delete artist");
+      toast.error("Failed to delete artist.");
     }
   };
 
-  // ADD ARTIST
+  // CREATE / EDIT ARTIST
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateForm()) return; 
+
     const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
     const data = new FormData();
     data.append("name", formData.name);
     data.append("bio", formData.bio);
+    data.append("userId", userId);
 
     if (formData.artistImage) {
       data.append("artistImage", formData.artistImage);
@@ -56,29 +83,30 @@ export default function Artists() {
 
     try {
       if (editId) {
-        // Update artist
         await api.put(`auth/artist/update-artist/${editId}`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         });
+        toast.success("Artist updated successfully.");
       } else {
-        // Create artist
-        await api.post("auth/artist/create-artist", data, {
+        await api.post(`auth/artist/create-artist`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         });
+        toast.success("Artist created successfully.");
       }
 
-      fetchArtists();
+      await fetchArtists();
       setFormData({ name: "", bio: "", artistImage: null });
       setEditId(null);
       setShowForm(false);
+      setErrors({});
     } catch (err) {
-      alert("Failed to save artist");
+      toast.error(err.response?.data?.message || "Failed to save artist.");
     }
   };
 
@@ -88,7 +116,7 @@ export default function Artists() {
     setFormData({
       name: artist.name,
       bio: artist.bio,
-      artistImage: artist.artistImage[0] || "",
+      artistImage: null,
     });
     setShowForm(true);
   };
@@ -123,46 +151,55 @@ export default function Artists() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-2xl font-semibold underline">Artist Management</h2>
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
-          onClick={openAddForm}
-        >
-          + Artist
-        </button>
-      </div>
+      <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-7">
+          <div className="justify-self-start">
+            <h2 className="text-2xl font-sans font-semibold underline">
+              Artist Management
+            </h2>
+          </div>
 
-      <div className="mb-6 text-center">
-        <input
-          type="text"
-          placeholder="Search by name or bio..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
-        />
+          <div className="justify-self-center w-full relative max-w-sm">
+            <span className="absolute inset-y-0 left-3 flex items-center pr-3 border-r border-gray-300 text-gray-500">
+              🔍
+            </span>
+            <input
+              type="text"
+              placeholder="Search by name or bio..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-14 pr-3 py-2 text-sm rounded border border-gray-300 focus:outline-none focus:border-purple-400 !placeholder:text-gray-100"
+            />
+          </div>
+
+          <div className="justify-self-end">
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer text-sm"
+              onClick={openAddForm}
+            >
+              + Artist
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Artist Table */}
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+      <div className="overflow-hidden rounded-lg shadow-lg border border-gray-300">
+        <table className="min-w-full bg-white border border-gray-300">
           <thead className="uppercase text-xs">
-            <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
-              <th className="p-3 border dark:border-gray-600">ID</th>
-              <th className="p-3 border dark:border-gray-600">Image</th>
-              <th className="p-3 border dark:border-gray-600">Name</th>
-              <th className="p-3 border dark:border-gray-600">Bio</th>
-              <th className="p-3 border dark:border-gray-600">Created By</th>
-              <th className="p-3 border dark:border-gray-600">Actions</th>
+            <tr className="bg-gray-200 text-left text-gray-700">
+              <th className="p-3 border border-gray-300">ID</th>
+              <th className="p-3 border border-gray-300">Image</th>
+              <th className="p-3 border border-gray-300">Name</th>
+              <th className="p-3 border border-gray-300">Bio</th>
+              <th className="p-3 border border-gray-300">Created By</th>
+              <th className="p-3 border border-gray-300">Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentArtists.length === 0 ? (
               <tr>
-                <td
-                  colSpan="5"
-                  className="p-4 text-center text-gray-500 dark:text-gray-400"
-                >
+                <td colSpan="6" className="p-4 text-center text-gray-500">
                   Artists Not Found.
                 </td>
               </tr>
@@ -170,12 +207,12 @@ export default function Artists() {
               currentArtists.map((artist, index) => (
                 <tr
                   key={artist._id}
-                  className="dark:hover:bg-gray-800 cursor-pointer"
+                  className="hover:bg-gray-50 cursor-pointer"
                 >
-                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
                     {(currentPage - 1) * artistsPerPage + index + 1}.
                   </td>
-                  <td className="p-3 border dark:border-gray-600">
+                  <td className="p-3 border border-gray-300">
                     {artist.artistImage.length > 0 ? (
                       <img
                         src={artist.artistImage[0]}
@@ -186,16 +223,16 @@ export default function Artists() {
                       <span>No Image</span>
                     )}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-white">
-                    {artist.name || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-800">
+                    {artist.name || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {artist.bio || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-600 text-sm">
+                    {artist.bio || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
+                  <td className="p-3 border border-gray-300 text-gray-600 text-sm">
                     {artist.createdBy?.name || "Unknown"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600  whitespace-nowrap">
+                  <td className="p-3 border border-gray-300 whitespace-nowrap">
                     <button
                       className="bg-blue-500 text-white text-sm px-3 py-1 rounded mr-2 hover:bg-blue-700 transition duration-300 cursor-pointer"
                       onClick={() => openEditForm(artist)}
@@ -214,73 +251,12 @@ export default function Artists() {
             )}
           </tbody>
         </table>
-        {totalPages > 1 && (
-          <div className="flex justify-center mt-4 space-x-2">
-            {(() => {
-              const pages = [];
-              let leftDotsShown = false;
-              let rightDotsShown = false;
-
-              for (let i = 1; i <= totalPages; i++) {
-                const isCurrent = currentPage === i;
-                const isFirstTwo = i === 1 || i === 2;
-                const isLastTwo = i === totalPages || i === totalPages - 1;
-                const isNearCurrent = Math.abs(currentPage - i) <= 1;
-
-                const shouldShow =
-                  totalPages <= 4 || isFirstTwo || isLastTwo || isNearCurrent;
-
-                if (shouldShow) {
-                  pages.push(
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i)}
-                      className={`px-3 py-1 rounded ${
-                        isCurrent
-                          ? "bg-purple-600 text-white transition duration-300 cursor-pointer"
-                          : "bg-gray-700 text-gray-300 transition duration-300 cursor-pointer"
-                      } hover:bg-purple-700 transition duration-300`}
-                    >
-                      {i}
-                    </button>
-                  );
-                } else if (!leftDotsShown && i < currentPage && i > 2) {
-                  pages.push(
-                    <span
-                      key={`dots-left-${i}`}
-                      className="px-3 py-1 text-gray-500"
-                    >
-                      ...
-                    </span>
-                  );
-                  leftDotsShown = true;
-                } else if (
-                  !rightDotsShown &&
-                  i > currentPage &&
-                  i < totalPages - 1
-                ) {
-                  pages.push(
-                    <span
-                      key={`dots-right-${i}`}
-                      className="px-3 py-1 text-gray-500"
-                    >
-                      ...
-                    </span>
-                  );
-                  rightDotsShown = true;
-                }
-              }
-
-              return pages;
-            })()}
-          </div>
-        )}
       </div>
 
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-white/0 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-white p-6 rounded-lg shadow-md w-96 border border-purple-500">
+          <div className="bg-white p-6 rounded-lg shadow-md w-96 border border-purple-500">
             <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
               {editId ? "Update Artist" : "Add Artist"}
             </h2>
@@ -291,13 +267,15 @@ export default function Artists() {
                 </label>
                 <input
                   type="text"
-                  className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 hover:border-purple-500"
+                  className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 hover:border-purple-500 text-gray-500 text-sm"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  required
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-xs">{errors.name}</p>
+                )}
               </div>
 
               <div className="mb-4">
@@ -305,13 +283,15 @@ export default function Artists() {
                   Bio
                 </label>
                 <textarea
-                  className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 hover:border-purple-500"
+                  className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 hover:border-purple-500 text-gray-500 text-sm"
                   value={formData.bio}
                   onChange={(e) =>
                     setFormData({ ...formData, bio: e.target.value })
                   }
-                  required
                 ></textarea>
+                {errors.bio && (
+                  <p className="text-red-500 text-xs">{errors.bio}</p>
+                )}
               </div>
 
               <div className="mb-4">
@@ -321,30 +301,95 @@ export default function Artists() {
                 <input
                   type="file"
                   accept="image/*"
-                  className="w-full border px-3 py-2 rounded cursor-pointer file:hover:cursor-pointer hover:border-purple-500"
+                  className="w-full border px-3 py-2 rounded cursor-pointer hover:border-purple-500 text-gray-500 text-sm"
                   onChange={(e) =>
                     setFormData({ ...formData, artistImage: e.target.files[0] })
                   }
                 />
+                {errors.artistImage && (
+                  <p className="text-red-500 text-xs">{errors.artistImage}</p>
+                )}
               </div>
 
               <div className="flex justify-between">
                 <button
                   type="submit"
-                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
+                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer text-sm"
                 >
                   {editId ? "Update" : "Add"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer text-sm"
                 >
                   Cancel
                 </button>
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4 space-x-2">
+          {(() => {
+            const pages = [];
+            let leftDotsShown = false;
+            let rightDotsShown = false;
+
+            for (let i = 1; i <= totalPages; i++) {
+              const isCurrent = currentPage === i;
+              const isFirstTwo = i === 1 || i === 2;
+              const isLastTwo = i === totalPages || i === totalPages - 1;
+              const isNearCurrent = Math.abs(currentPage - i) <= 1;
+
+              const shouldShow =
+                totalPages <= 4 || isFirstTwo || isLastTwo || isNearCurrent;
+
+              if (shouldShow) {
+                pages.push(
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i)}
+                    className={`px-3 py-1 rounded ${
+                      isCurrent
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-300 text-gray-500"
+                    } hover:bg-purple-600 hover:text-white transition duration-300 cursor-pointer`}
+                  >
+                    {i}
+                  </button>
+                );
+              } else if (!leftDotsShown && i < currentPage && i > 2) {
+                pages.push(
+                  <span
+                    key={`dots-left-${i}`}
+                    className="px-3 py-1 text-gray-500"
+                  >
+                    ...
+                  </span>
+                );
+                leftDotsShown = true;
+              } else if (
+                !rightDotsShown &&
+                i > currentPage &&
+                i < totalPages - 1
+              ) {
+                pages.push(
+                  <span
+                    key={`dots-right-${i}`}
+                    className="px-3 py-1 text-gray-500"
+                  >
+                    ...
+                  </span>
+                );
+                rightDotsShown = true;
+              }
+            }
+
+            return pages;
+          })()}
         </div>
       )}
     </div>

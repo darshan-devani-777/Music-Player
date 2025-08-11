@@ -9,7 +9,7 @@ const Activity = require('../models/activityModel');
 // CREATE SONG
 exports.createSong = async (req, res) => {
   try {
-    const { title, duration, artistId, albumId, genreId, fileUrl } = req.body;
+    const { title, duration, artistId, albumId, genreId, fileUrl , type } = req.body;
     const userId = req.user.id;
 
     const existingSong = await Song.findOne({ title, artistId, albumId });
@@ -24,23 +24,46 @@ exports.createSong = async (req, res) => {
     const file = await axios.get(fileUrl, { responseType: "arraybuffer" });
     const buffer = Buffer.from(file.data, "binary");
 
-    // Upload audio file to Cloudinary
+    // Upload Audio / Video
+    const fileType = await import('file-type');
+    const { fileTypeFromBuffer } = fileType;
+    const fileInfo = await fileTypeFromBuffer(buffer);
+    
+    let folder = "music-app/songs/others";
+    let resourceType = "auto";
+    
+    if (type === "audio") {
+      folder = "music-app/songs/audio";
+      resourceType = "video"; 
+    } else if (type === "video") {
+      folder = "music-app/songs/video";
+      resourceType = "video";
+    } else {
+      if (fileInfo?.mime.startsWith("audio")) {
+        folder = "music-app/songs/audio";
+        resourceType = "video";
+      } else if (fileInfo?.mime.startsWith("video")) {
+        folder = "music-app/songs/video";
+        resourceType = "video";
+      }
+    }
+    
     const audioUpload = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          resource_type: "video",
-          folder: "music-app/songs",
+          resource_type: resourceType,
+          folder: folder,
         },
         (err, result) => {
           if (err) {
-            console.error("Cloudinary Audio Upload Error:", err);
+            console.error("Cloudinary Upload Error:", err);
             return reject(err);
           }
           resolve(result);
         }
       );
       streamifier.createReadStream(buffer).pipe(stream);
-    });
+    });    
 
     // Format duration if number
     let formattedDuration = duration;
@@ -62,6 +85,7 @@ exports.createSong = async (req, res) => {
       uploadedBy: userId,
       cloudinaryUrl: audioUpload.secure_url,
       songImage, 
+      type,
     });
 
     await Activity.create({
@@ -123,6 +147,52 @@ exports.getAllSongs = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Server error", error: err.message });
+  }
+};
+
+// GET ALL AUDIO
+exports.getAllAudioSongs = async (req, res) => {
+  try {
+    const audios = await Song.find({ type: "audio" })
+      .populate("artistId")       
+      .populate("albumId")       
+      .populate("genreId")        
+      .populate("uploadedBy", "_id name email"); 
+
+    return res.status(200).json({
+      success: true,
+      message: "Audio Songs Fetched Successfully...",
+      data: audios,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Server Error: Unable to fetch audio songs",
+      error: err.message,
+    });
+  }
+};
+
+// GET ALL VIDEO
+exports.getAllVideoSongs = async (req, res) => {
+  try {
+    const videos = await Song.find({ type: "video" })
+      .populate("artistId")
+      .populate("albumId")
+      .populate("genreId")
+      .populate("uploadedBy", "_id name email");
+
+    return res.status(200).json({
+      success: true,
+      message: "Video Songs Fetched Successfully",
+      data: videos,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Server Error: Unable to fetch video songs",
+      error: err.message,
+    });
   }
 };
 

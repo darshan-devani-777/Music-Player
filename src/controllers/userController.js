@@ -153,6 +153,7 @@ exports.login = async (req, res) => {
       status: true,
       message: "User Login Successfully...",
       data: {
+        // _id: user._id,
         encryptedUserData: encryptedData,
         iv: iv,
         key: key,
@@ -245,6 +246,7 @@ exports.updateUser = async (req, res) => {
     user.role = role || user.role;
 
     const updatedUserDetails = {
+      _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -259,6 +261,7 @@ exports.updateUser = async (req, res) => {
     console.log("✅ Decrypted User Data:", decrypted);
 
     await user.save();
+    console.log("✅User Updated Successfully...");
 
     const currentUserId = req.user._id.toString();
     const targetUserId = userId.toString();
@@ -541,7 +544,7 @@ exports.resetPassword = async (req, res) => {
     await user
       .save()
       .then(() => {
-        console.log("User Saved And Password Reset Successfully...");
+        console.log("✅User Saved And Password Reset Successfully...");
       })
       .catch((err) => {
         console.error("Error saving user:", err);
@@ -626,6 +629,10 @@ exports.googleLoginWithToken = async (req, res) => {
 
       console.log("✅ Existing user logged in:", user.name, "-", user.email);
 
+      user.accessToken = generateAccessToken(user);
+      user.refreshToken = generateRefreshToken(user);
+      await user.save();
+
       await Activity.create({
         user: user._id,
         action: 'User_google_login',
@@ -635,6 +642,7 @@ exports.googleLoginWithToken = async (req, res) => {
 
       return res.json({
         accessToken: user.accessToken,
+        refreshToken: user.refreshToken,
         user: {
           _id: user._id,
           name: user.name,
@@ -645,6 +653,7 @@ exports.googleLoginWithToken = async (req, res) => {
       });
     }
 
+    // NEW USER
     const newUser = new User({
       name,
       email,

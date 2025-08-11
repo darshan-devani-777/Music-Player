@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Albums() {
   const [albums, setAlbums] = useState([]);
+  const [artists, setArtists] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -12,12 +15,38 @@ export default function Albums() {
   });
   const [editId, setEditId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [formErrors, setFormErrors] = useState({});
+  const [editingAlbumId, setEditingAlbumId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const albumsPerPage = 7;
 
   const token = localStorage.getItem("token");
+  const isEditMode = Boolean(editingAlbumId);
 
-  // FETCH ALBUM
+  const validateForm = () => {
+    const newErrors = {};
+    const isEditMode = Boolean(editId);
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required.";
+    }
+
+    if (!isEditMode && (!formData.artistId || formData.artistId === "")) {
+      newErrors.artistId = "Artist is required.";
+    }
+
+    if (!isEditMode && !formData.releaseDate) {
+      newErrors.releaseDate = "Release date is required.";
+    }
+
+    if (!isEditMode && !formData.albumImage) {
+      newErrors.albumImage = "Album image is required.";
+    }
+
+    return newErrors;
+  };
+
+  // FETCH ALBUMS
   const fetchAlbums = async () => {
     try {
       const res = await api.get("/auth/album/get-all-album", {
@@ -25,67 +54,110 @@ export default function Albums() {
       });
       setAlbums(res.data.data);
     } catch (err) {
-      alert("Failed to fetch albums");
+      toast.error("Failed to fetch albums.");
+    }
+  };
+
+  // FETCH ARTISTS
+  const fetchArtists = async () => {
+    try {
+      const res = await api.get("/auth/artist/get-all-artist", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setArtists(res.data.data);
+    } catch (err) {
+      toast.error("Failed to fetch artists.");
     }
   };
 
   // DELETE ALBUM
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this album?")) return;
+
     try {
       await api.delete(`auth/album/delete-album/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      toast.success("Album deleted successfully...");
       fetchAlbums();
     } catch (err) {
-      alert("Failed to delete album");
+      toast.error("Failed to delete album.");
     }
   };
 
-  // ADD ALBUM
+  // CREATE / EDIT ALBUM
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+
+    const isEditMode = Boolean(editId);
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+
     const data = new FormData();
     data.append("title", formData.title);
-    data.append("artist", formData.artist);
-    data.append("releaseDate", formData.releaseDate);
+
+    if (!isEditMode || formData.artistId) {
+      data.append("artistId", formData.artistId);
+    }
+    if (!isEditMode || formData.releaseDate) {
+      data.append("releaseDate", formData.releaseDate);
+    }
+
     if (formData.albumImage) {
       data.append("albumImage", formData.albumImage);
     }
 
     try {
-      if (editId) {
-        await api.put(`auth/album/update-album/${editId}`, data, {
+      if (isEditMode) {
+        await api.put(`/auth/album/update-album/${editId}`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         });
+        toast.success("Album updated successfully...");
       } else {
-        await api.post(`auth/album/create-album`, data, {
+        await api.post(`/auth/album/create-album`, data, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         });
+        toast.success("Album created successfully...");
       }
 
+      // Refresh albums
       fetchAlbums();
-      setFormData({ title: "", artist: "", releaseDate: "", albumImage: null });
+
+      // Reset form
+      setFormData({
+        title: "",
+        artistId: "",
+        releaseDate: "",
+        albumImage: null,
+      });
       setEditId(null);
       setShowForm(false);
     } catch (err) {
-      alert("Failed to save album");
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Failed to save album.");
+      }
     }
   };
 
-  // EDIT ALBUM
+  // EDIT ALBUM FROM
   const openEditForm = (album) => {
     setEditId(album._id);
     setFormData({
       title: album.title,
-      artist: album.artist,
-      releaseDate: album.releaseDate.split("T")[0],
+      artistId: album.artistId?._id || "",
+      releaseDate: album.releaseDate ? album.releaseDate.split("T")[0] : "",
       albumImage: null,
     });
     setShowForm(true);
@@ -99,6 +171,7 @@ export default function Albums() {
 
   useEffect(() => {
     fetchAlbums();
+    fetchArtists();
   }, []);
 
   useEffect(() => {
@@ -127,47 +200,58 @@ export default function Albums() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-2xl font-semibold underline">Album Management</h2>
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
-          onClick={openAddForm}
-        >
-          + Album
-        </button>
+      {/* HEADER */}
+      <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-7">
+          <div className="justify-self-start">
+            <h2 className="text-2xl font-sans font-semibold underline">
+              Album Management
+            </h2>
+          </div>
+
+          <div className="justify-self-center w-full relative max-w-sm">
+            <span className="absolute inset-y-0 left-3 flex items-center pr-3 border-r border-gray-300 text-gray-500">
+              🔍
+            </span>
+            <input
+              type="text"
+              placeholder="Search by title, artist, or release date..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-14 pr-3 py-2 text-sm rounded border border-gray-300 focus:outline-none focus:border-purple-400 !placeholder:text-gray-100"
+            />
+          </div>
+
+          <div className="justify-self-end">
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer text-sm"
+              onClick={openAddForm}
+            >
+              + Album
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="mb-6 text-center">
-        <input
-          type="text"
-          placeholder="Search by title, artist, or release date..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
-        />
-      </div>
-
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+      {/* Album Table */}
+      <div className="overflow-hidden rounded-lg shadow-lg border border-gray-300">
+        <table className="min-w-full bg-white border border-gray-300">
           <thead className="uppercase text-xs">
-            <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
-              <th className="p-3 border dark:border-gray-600">ID</th>
-              <th className="p-3 border dark:border-gray-600">Image</th>
-              <th className="p-3 border dark:border-gray-600">Title</th>
-              <th className="p-3 border dark:border-gray-600">Artist</th>
-              <th className="p-3 border dark:border-gray-600">Release Date</th>
-              <th className="p-3 border dark:border-gray-600">No. of Images</th>
-              <th className="p-3 border dark:border-gray-600">Created By</th>
-              <th className="p-3 border dark:border-gray-600">Actions</th>
+            <tr className="bg-gray-200 text-left text-gray-700">
+              <th className="p-3 border border-gray-300">ID</th>
+              <th className="p-3 border border-gray-300">Image</th>
+              <th className="p-3 border border-gray-300">Title</th>
+              <th className="p-3 border border-gray-300">Artist</th>
+              <th className="p-3 border border-gray-300">Release Date</th>
+              <th className="p-3 border border-gray-300">No. of Images</th>
+              <th className="p-3 border border-gray-300">Created By</th>
+              <th className="p-3 border border-gray-300">Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentAlbums.length === 0 ? (
               <tr>
-                <td
-                  colSpan="7"
-                  className="p-4 text-center text-gray-500 dark:text-gray-400"
-                >
+                <td colSpan="7" className="p-4 text-center text-gray-500">
                   Albums Not Found.
                 </td>
               </tr>
@@ -175,12 +259,12 @@ export default function Albums() {
               currentAlbums.map((album, index) => (
                 <tr
                   key={album._id}
-                  className="dark:hover:bg-gray-800 cursor-pointer"
+                  className="hover:bg-gray-100 cursor-pointer"
                 >
-                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
                     {(currentPage - 1) * albumsPerPage + index + 1}.
                   </td>
-                  <td className="p-3 border dark:border-gray-600">
+                  <td className="p-3 border border-gray-300">
                     {album.albumImages.length > 0 ? (
                       <img
                         src={album.albumImages[0]}
@@ -191,31 +275,31 @@ export default function Albums() {
                       <span>No Image</span>
                     )}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-white">
-                    {album.title || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-900">
+                    {album.title || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {album.artistId?.name || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
+                    {album.artistId?.name || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {new Date(album.releaseDate).toLocaleDateString() || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
+                    {new Date(album.releaseDate).toLocaleDateString() || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {album.albumImages.length || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
+                    {album.albumImages.length || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
                     {album.createdBy?.name || "Unknown"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600">
+                  <td className="p-3 border border-gray-300">
                     <div className="flex gap-2 flex-nowrap">
                       <button
-                        className="bg-blue-500 hover:bg-blue-700 transition duration-300 text-sm  text-white px-3 py-1 rounded whitespace-nowrap cursor-pointer"
+                        className="bg-blue-500 hover:bg-blue-700 transition duration-300 text-sm text-white px-3 py-1 rounded whitespace-nowrap cursor-pointer"
                         onClick={() => openEditForm(album)}
                       >
                         Edit
                       </button>
                       <button
-                        className="bg-red-500 hover:bg-red-700 transition duration-300 text-sm  text-white px-3 py-1 rounded whitespace-nowrap cursor-pointer"
+                        className="bg-red-500 hover:bg-red-700 transition duration-300 text-sm text-white px-3 py-1 rounded whitespace-nowrap cursor-pointer"
                         onClick={() => handleDelete(album._id)}
                       >
                         Delete
@@ -227,6 +311,7 @@ export default function Albums() {
             )}
           </tbody>
         </table>
+
         {totalPages > 1 && (
           <div className="flex justify-center mt-4 space-x-2">
             {(() => {
@@ -251,7 +336,7 @@ export default function Albums() {
                       className={`px-3 py-1 rounded ${
                         isCurrent
                           ? "bg-purple-600 text-white cursor-pointer"
-                          : "bg-gray-700 text-gray-300 cursor-pointer"
+                          : "bg-gray-300 text-gray-800 cursor-pointer"
                       } hover:bg-purple-700 transition duration-300`}
                     >
                       {i}
@@ -304,28 +389,43 @@ export default function Albums() {
                 </label>
                 <input
                   type="text"
-                  className="w-full border px-3 py-2 rounded bg-white text-black"
+                  className="w-full border px-3 py-2 rounded bg-white text-gray-500 text-sm"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  required
                 />
+                {formErrors.title && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.title}
+                  </p>
+                )}
               </div>
 
+              {/* Artist Dropdown */}
               <div className="mb-4">
                 <label className="block text-sm text-black font-semibold mb-1">
                   Artist
                 </label>
-                <input
-                  type="text"
-                  className="w-full border px-3 py-2 rounded bg-white text-black"
-                  value={formData.artist}
+                <select
+                  value={formData.artistId}
                   onChange={(e) =>
-                    setFormData({ ...formData, artist: e.target.value })
+                    setFormData({ ...formData, artistId: e.target.value })
                   }
-                  required
-                />
+                  className="w-full border px-3 py-2 rounded bg-white text-gray-500 text-sm cursor-pointer hover:border-purple-400 transition duration-300"
+                >
+                  <option value="">Select Artist</option>
+                  {artists.map((artist) => (
+                    <option key={artist._id} value={artist._id}>
+                      {artist.name}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.artistId && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.artistId}
+                  </p>
+                )}
               </div>
 
               <div className="mb-4">
@@ -334,13 +434,17 @@ export default function Albums() {
                 </label>
                 <input
                   type="date"
-                  className="w-full border px-3 py-2 rounded bg-white text-black"
+                  className="w-full border px-3 py-2 rounded bg-white text-gray-500 text-sm cursor-pointer"
                   value={formData.releaseDate}
                   onChange={(e) =>
                     setFormData({ ...formData, releaseDate: e.target.value })
                   }
-                  required
                 />
+                {formErrors.releaseDate && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.releaseDate}
+                  </p>
+                )}
               </div>
 
               <div className="mb-4">
@@ -350,24 +454,29 @@ export default function Albums() {
                 <input
                   type="file"
                   accept="image/*"
-                  className="w-full border px-3 py-2 rounded bg-white text-black hover:border-purple-400 transition duration-300 cursor-pointer"
+                  className="w-full border px-3 py-2 rounded bg-white text-gray-500 text-sm hover:border-purple-400 transition duration-300 cursor-pointer"
                   onChange={(e) =>
                     setFormData({ ...formData, albumImage: e.target.files[0] })
                   }
                 />
+                {formErrors.albumImage && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.albumImage}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-between">
                 <button
                   type="submit"
-                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
+                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer text-sm"
                 >
                   {editId ? "Update" : "Add"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer text-sm"
                 >
                   Cancel
                 </button>

@@ -11,6 +11,8 @@ export default function FAQ() {
   const [unansweredOnly, setUnansweredOnly] = useState(false);
   const [tempAnswer, setTempAnswer] = useState({});
   const [openId, setOpenId] = useState(null);
+  const [createError, setCreateError] = useState("");
+  const [answerError, setAnswerError] = useState({});
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
@@ -36,17 +38,24 @@ export default function FAQ() {
 
   // CREATE FAQ
   const handleCreate = async () => {
-    if (!newQuestion.trim()) return;
+    if (!newQuestion.trim()) {
+      setCreateError("Question cannot be empty.");
+      return;
+    }
+    setCreateError(""); // clear error
+
     try {
       await api.post(
         "/auth/faq/create-faq",
         { question: newQuestion },
         { headers }
       );
+      toast.success("FAQ created successfully...");
       setNewQuestion("");
       fetchFaqs();
     } catch (err) {
       console.error("Create FAQ Error", err);
+      toast.error("Failed to create FAQ.");
     }
   };
 
@@ -64,44 +73,58 @@ export default function FAQ() {
         { question: editQuestion, answer: editAnswer },
         { headers }
       );
+      toast.success("FAQ updated successfully...");
       setEditId(null);
       setEditQuestion("");
       setEditAnswer("");
       fetchFaqs();
     } catch (err) {
       console.error("Update FAQ Error", err);
+      toast.error("Failed to update FAQ.");
     }
   };
 
   // DELETE FAQ
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this FAQ?")) return;
+
     try {
       await api.delete(`/auth/faq/delete-faq/${id}`, { headers });
+      toast.success("FAQ deleted successfully...");
       fetchFaqs();
     } catch (err) {
       console.error("Delete FAQ Error", err);
+      toast.error("Failed to delete FAQ.");
     }
   };
 
   // ANSWER FAQ
   const handleAnswer = async (id, answer) => {
+    if (!answer.trim()) {
+      setAnswerError((prev) => ({ ...prev, [id]: "Answer cannot be empty." }));
+      return;
+    }
+    // Clear error for this id
+    setAnswerError((prev) => ({ ...prev, [id]: "" }));
+
     try {
       await api.put(`/auth/faq/answer-faq/${id}`, { answer }, { headers });
+      toast.success("FAQ answered successfully...");
       fetchFaqs();
     } catch (err) {
       console.error("Answer FAQ Error", err);
+      toast.error("Failed to answer FAQ.");
     }
   };
 
   return (
-    <div className="min-h-full mx-auto px-2 py-3">
-      <h2 className="text-2xl font-bold text-center text-gray-800 underline">
+    <div className="min-h-full mx-auto px-2">
+      <h2 className="text-2xl font-sans font-semibold underline">
         Frequently Asked Questions
       </h2>
 
-       {/* Filter */}
-       <div className="flex justify-end mt-3">
+      {/* Filter */}
+      <div className="flex justify-end mt-3">
         <label className="flex items-center gap-2 text-sm text-gray-400">
           <input
             type="checkbox"
@@ -114,18 +137,30 @@ export default function FAQ() {
       </div>
 
       {/* Create FAQ */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 mt-5">
-        <input
-          type="text"
-          className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm placeholder:text-sm"
-          placeholder="Enter a new FAQ question..."
-          value={newQuestion}
-          onChange={(e) => setNewQuestion(e.target.value)}
-        />
-
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-5">
+        <div className="flex-1 flex flex-col">
+          <input
+            type="text"
+            className={`border rounded-lg px-4 py-2 focus:outline-none focus:ring-1 text-sm placeholder:text-sm
+        ${
+          createError
+            ? "border-red-500 focus:ring-red-500"
+            : "border-gray-300 focus:ring-purple-500"
+        }`}
+            placeholder="Enter a new FAQ question..."
+            value={newQuestion}
+            onChange={(e) => {
+              setNewQuestion(e.target.value);
+              if (createError) setCreateError("");
+            }}
+          />
+          {createError && (
+            <p className="text-red-600 text-sm mt-1">{createError}</p>
+          )}
+        </div>
         <button
           onClick={handleCreate}
-          className="bg-indigo-600 text-white px-3 py-2 text-[13px] rounded-sm hover:bg-indigo-800 transition duration-300 cursor-pointer"
+          className="bg-purple-600 text-white px-3 py-2 text-[13px] rounded-sm hover:bg-purple-800 transition duration-300 cursor-pointer"
         >
           Add FAQ
         </button>
@@ -152,7 +187,7 @@ export default function FAQ() {
                     {faq.question}
                   </h3>
                   <FiChevronDown
-                    className={`text-2xl text-blue-600 transition-transform duration-300 transform ${
+                    className={`text-2xl text-purple-600 transition-transform duration-300 transform ${
                       isOpen ? "rotate-180" : "rotate-0"
                     }`}
                   />
@@ -203,28 +238,47 @@ export default function FAQ() {
                       )}
 
                       {!faq.answer && (
-                        <div className="mt-2 flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="Write answer..."
-                            className="border px-2 py-1 flex-1 rounded-lg"
-                            value={tempAnswer[faq._id] || ""}
-                            onChange={(e) =>
-                              setTempAnswer((prev) => ({
-                                ...prev,
-                                [faq._id]: e.target.value,
-                              }))
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleAnswer(faq._id, tempAnswer[faq._id]);
+                        <div className="mt-2 flex items-start gap-2">
+                          <div className="flex-1 flex flex-col">
+                            <input
+                              type="text"
+                              placeholder="Write answer..."
+                              className={`border px-2 py-1 rounded-lg ${
+                                answerError[faq._id]
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                              value={tempAnswer[faq._id] || ""}
+                              onChange={(e) => {
                                 setTempAnswer((prev) => ({
                                   ...prev,
-                                  [faq._id]: "",
+                                  [faq._id]: e.target.value,
                                 }));
-                              }
-                            }}
-                          />
+                                if (answerError[faq._id]) {
+                                  setAnswerError((prev) => ({
+                                    ...prev,
+                                    [faq._id]: "",
+                                  }));
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleAnswer(faq._id, tempAnswer[faq._id]);
+                                  setTempAnswer((prev) => ({
+                                    ...prev,
+                                    [faq._id]: "",
+                                  }));
+                                }
+                              }}
+                            />
+                            {/* Error message below input */}
+                            {answerError[faq._id] && (
+                              <p className="text-red-600 text-xs mt-1">
+                                {answerError[faq._id]}
+                              </p>
+                            )}
+                          </div>
+
                           <button
                             onClick={() => {
                               handleAnswer(faq._id, tempAnswer[faq._id]);
@@ -233,7 +287,7 @@ export default function FAQ() {
                                 [faq._id]: "",
                               }));
                             }}
-                            className="bg-indigo-600 hover:bg-indigo-800 transition duration-300 cursor-pointer text-white px-3 py-1 rounded-lg"
+                            className="bg-indigo-600 hover:bg-indigo-800 transition duration-300 cursor-pointer text-white px-3 py-1 rounded-lg self-center"
                           >
                             Send
                           </button>

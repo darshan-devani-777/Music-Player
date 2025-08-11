@@ -13,6 +13,11 @@ const songSchema = new mongoose.Schema({
     type: String,
     required: [true, "Cloudinary URL is required"],
   },
+  type: {
+    type: String,
+    enum: ["audio", "video"],
+    required: [true, "Song type (audio or video) is required"],
+  },
   songImage: {
     type: [String],
     validate: {

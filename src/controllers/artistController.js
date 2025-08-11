@@ -53,20 +53,58 @@ exports.createArtist = async (req, res) => {
   }
 };
 
-// GET ALL ARTISTS
+// GET ALL ARTISTS 
 exports.getAllArtists = async (req, res) => {
   try {
-    const artists = await Artist.find().populate("createdBy", "name email");
+    const artists = await Artist.aggregate([
+      {
+        $lookup: {
+          from: "songs",          
+          localField: "_id",      
+          foreignField: "artistId", 
+          as: "songs",           
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "createdBy",
+          foreignField: "_id",
+          as: "createdByDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$createdByDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          bio: 1,        
+          artistImage: 1,      
+          createdBy: {
+            _id: "$createdByDetails._id",
+            name: "$createdByDetails.name",
+            email: "$createdByDetails.email",
+          },
+          songs: 1,      
+        },
+      },
+    ]);
 
     res.status(200).json({
       status: "success",
-      message: "All Artists Fetched Successfully...",
+      message: "All Artists Fetched Successfully with Songs and Image",
       data: artists,
     });
   } catch (err) {
+    console.error("Error fetching artists:", err);
     res.status(500).json({
       status: "error",
       message: "Failed to fetch artists",
+      error: err.message,
     });
   }
 };
@@ -129,7 +167,7 @@ exports.updateArtist = async (req, res) => {
     }
 
     await Activity.create({
-      user: userId,
+      user: req.user.userId,
       action: 'Updated_artist',
       targetType: 'Artist',
       targetId: updatedArtist._id,

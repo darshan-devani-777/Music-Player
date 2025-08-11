@@ -28,9 +28,9 @@ exports.createAlbum = async (req, res) => {
     });
 
     const savedAlbum = await album.save();
-    const populatedAlbum = await savedAlbum
-      .populate("createdBy", "_id name email")
-      .populate("artistId", "_id name bio artistImage");
+    const populatedAlbum = await Album.findById(savedAlbum._id)
+    .populate("createdBy", "_id name email")
+    .populate("artistId", "_id name bio artistImage");
 
       await Activity.create({
         user: userId,

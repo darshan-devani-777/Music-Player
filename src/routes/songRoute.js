@@ -21,13 +21,19 @@ const validate = (req, res, next) => {
       });
     }
     next();
-  };
+};
 
 // CREATE SONG (Admin)
 router.post("/song/create-song",  upload.array("songImage") , authMiddleware , isAdmin , validateCreateSong , validate , controller.createSong);
 
 // GET ALL SONG (Admin / User)
 router.get("/song/get-all-song", authMiddleware , controller.getAllSongs);
+
+// GET ALL AUDIO-SONG
+router.get("/song/audio-song", authMiddleware , controller.getAllAudioSongs);
+
+// GET ALL VIDEO-SONG
+router.get("/song/video-song", authMiddleware , controller.getAllVideoSongs);
 
 // GET NEW RELEASED SONGS (Admin / User)
 router.get("/song/new-released-song", authMiddleware , controller.getNewReleasedSongs);

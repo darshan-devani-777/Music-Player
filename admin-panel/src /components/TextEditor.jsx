@@ -12,9 +12,12 @@ import "draft-js/dist/Draft.css";
 import { FileUpload } from "primereact/fileupload";
 import EmojiPicker from "emoji-picker-react";
 import imageCompression from "browser-image-compression";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function PrimeTextEditor() {
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
+  const [validationError, setValidationError] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [textColor, setTextColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
@@ -138,13 +141,39 @@ export default function PrimeTextEditor() {
   const currentStyle = editorState.getCurrentInlineStyle();
   const blockType = RichUtils.getCurrentBlockType(editorState);
 
+  // SEND CONTENT
   const handleSend = async () => {
     const contentState = editorState.getCurrentContent();
+
+    const hasText = contentState.hasText();
+
+    const blocks = contentState.getBlockMap();
+    const hasImages = blocks.some((block) => {
+      if (block.getType() === "atomic") {
+        const entityKey = block.getEntityAt(0);
+        if (entityKey) {
+          const entity = contentState.getEntity(entityKey);
+          return entity.getType() === "IMAGE";
+        }
+      }
+      return false;
+    });
+
+    if (!hasText && !hasImages) {
+      const errorMsg = "Please enter some text or upload at least one image.";
+      toast.error(errorMsg);
+      setValidationError(errorMsg); // set error message in state to show below editor
+      return;
+    }
+
+    // Clear error if validation passes
+    setValidationError("");
+
     const rawContent = convertToRaw(contentState);
     const token = localStorage.getItem("token");
 
     try {
-      const response = await api.post(
+      await api.post(
         "/auth/editor/add-content",
         { content: rawContent },
         {
@@ -154,10 +183,10 @@ export default function PrimeTextEditor() {
           },
         }
       );
-      alert("✅ Content Saved Successfully...!");
+      toast.success("Content Saved Successfully...!");
       setEditorState(EditorState.createEmpty());
     } catch (error) {
-      alert(
+      toast.error(
         "Save failed: " +
           (error.response?.data?.message || "Something went wrong")
       );
@@ -326,9 +355,14 @@ export default function PrimeTextEditor() {
         </div>
       )}
 
-      {/* Text Editor */}
+      {/* TEXT EDITOR */}
       <div
-        className="DraftEditor-root min-h-[200px] border border-gray-300 text-sm p-4 rounded bg-white focus-within:ring-1 focus-within:ring-blue-400 overflow-x-auto"
+        className={`DraftEditor-root min-h-[200px] border text-sm p-4 rounded bg-white overflow-x-auto
+    ${
+      validationError
+        ? "border-red-500 focus-within:ring-red-500"
+        : "border-gray-300 focus-within:ring-purple-400"
+    }`}
         onClick={focusEditor}
       >
         <div className="public-DraftEditor-content break-words whitespace-pre-wrap break-all">
@@ -342,12 +376,15 @@ export default function PrimeTextEditor() {
           />
         </div>
       </div>
+      {validationError && (
+        <p className="text-red-600 text-sm mt-1">{validationError}</p>
+      )}
 
       {/* Send button */}
       <div className="flex justify-end mt-4">
         <button
           onClick={handleSend}
-          className="px-4 py-2 text-sm text-white bg-indigo-500 rounded hover:bg-indigo-700 transition duration-300 cursor-pointer"
+          className="px-4 py-2 text-sm text-white bg-purple-600 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
         >
           📤 Send
         </button>

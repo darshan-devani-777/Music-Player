@@ -1,6 +1,7 @@
 const EditorContent = require("../models/editorModel");
-const Activity = require('../models/activityModel');
-const cloudinary  = require("../utils/cloudinary"); 
+const Activity = require("../models/activityModel");
+const cloudinary = require("../utils/cloudinary");
+const draftToHtml = require("draftjs-to-html");
 
 // ADD CONTENT
 exports.addContent = async (req, res) => {
@@ -26,8 +27,8 @@ exports.addContent = async (req, res) => {
     }
 
     const images = Object.values(entityMap)
-      .filter(e => e.type === "IMAGE" && e.data?.src)
-      .map(e => e.data.src);
+      .filter((e) => e.type === "IMAGE" && e.data?.src)
+      .map((e) => e.data.src);
 
     const saved = await EditorContent.create({
       content,
@@ -36,8 +37,8 @@ exports.addContent = async (req, res) => {
 
     await Activity.create({
       user: userId,
-      action: 'Created_editor_content',
-      targetType: 'EditorContent',
+      action: "Created_editor_content",
+      targetType: "EditorContent",
       targetId: saved._id,
     });
 
@@ -47,13 +48,12 @@ exports.addContent = async (req, res) => {
       data: {
         _id: saved._id,
         content: saved.content,
-        images, 
+        images,
         createdBy: saved.createdBy,
         createdAt: saved.createdAt,
         updatedAt: saved.updatedAt,
       },
     });
-
   } catch (err) {
     console.error("Error in addContent:", err);
     res.status(500).json({
@@ -66,21 +66,23 @@ exports.addContent = async (req, res) => {
 
 // GET ALL CONTENT
 exports.getAllContent = async (req, res) => {
-    try {
-      const data = await EditorContent.find().sort({ createdAt: -1 });
-  
-      return res.status(200).json({
-        success: true,
-        message: "Content Fetched Successfully...",
-        count: data.length,
-        data,
-      });
-    } catch (err) {
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch content",
-        error: err.message,
-      });
-    }
+  try {
+    const data = await EditorContent.find().sort({ createdAt: -1 });
+
+    const htmlContent = data.map((item) => draftToHtml(item.content));
+    console.log(htmlContent);
+
+    return res.status(200).json({
+      success: true,
+      message: "Content Fetched Successfully...",
+      count: htmlContent.length,
+      data: htmlContent,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch content",
+      error: err.message,
+    });
+  }
 };
-  

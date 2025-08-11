@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Playlists() {
   const [playlists, setPlaylists] = useState([]);
@@ -11,12 +13,28 @@ export default function Playlists() {
     playlistImage: [],
     selectedAlbums: [],
   });
+  const [errors, setErrors] = useState({});
   const [editId, setEditId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const playlistsPerPage = 7;
 
   const token = localStorage.getItem("token");
+
+  // VALIDATION
+  const validateForm = () => {
+    let newErrors = {};
+    if (!formData.title.trim()) newErrors.title = "Title is required.";
+    if (!formData.description.trim())
+      newErrors.description = "Description is required.";
+    if (!editId && formData.playlistImage.length === 0)
+      newErrors.playlistImage = "At least one image is required.";
+    if (formData.selectedAlbums.length === 0)
+      newErrors.selectedAlbums = "Please select at least one album.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // FETCH PLAYLIST
   const fetchPlaylists = async () => {
@@ -27,7 +45,7 @@ export default function Playlists() {
       setPlaylists(res.data.data);
     } catch (err) {
       console.error("Error fetching playlists:", err);
-      alert("Failed to fetch playlists");
+      toast.error("Failed to fetch playlists.");
     }
   };
 
@@ -43,9 +61,11 @@ export default function Playlists() {
     }
   };
 
-  // FORM SUBMIT
+  // CREATE / EDIT PLAYLIST
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     const data = new FormData();
     data.append("title", formData.title);
     data.append("description", formData.description);
@@ -66,6 +86,7 @@ export default function Playlists() {
             "Content-Type": "multipart/form-data",
           },
         });
+        toast.success("Playlist updated successfully...");
       } else {
         await api.post("auth/playlist/create-playlist", data, {
           headers: {
@@ -73,6 +94,7 @@ export default function Playlists() {
             "Content-Type": "multipart/form-data",
           },
         });
+        toast.success("Playlist created successfully...");
       }
 
       fetchPlaylists();
@@ -84,10 +106,12 @@ export default function Playlists() {
       });
       setEditId(null);
       setShowForm(false);
+      setErrors({});
     } catch (err) {
-      const msg =
-        err?.response?.data?.message || err.message || JSON.stringify(err);
-      alert("Failed to save playlist: " + msg);
+      toast.error(
+        "Failed to save playlist: " +
+          (err?.response?.data?.message || err.message)
+      );
     }
   };
 
@@ -101,23 +125,32 @@ export default function Playlists() {
       selectedAlbums: playlist.albums.map((a) => a._id),
     });
     setShowForm(true);
+    setErrors({});
   };
 
   // DELETE PLAYLIST
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this playlist?"))
       return;
+
     try {
-      await api.delete(`auth/playlist/delete-playlist/${id}`, {
+      const response = await api.delete(`auth/playlist/delete-playlist/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchPlaylists();
+
+      if (response.data.status === "success") {
+        toast.success(response.data.message);
+        fetchPlaylists();
+      } else {
+        // If backend says error, show error message even if HTTP is 200
+        toast.error(response.data.message || "Failed to delete playlist.");
+      }
     } catch (err) {
-      alert("Failed to delete playlist");
+      toast.error("Failed to delete playlist.");
     }
   };
 
-  // ADD PLAYLIST
+  // ADD OPEN FORM
   const openAddForm = () => {
     setEditId(null);
     setFormData({
@@ -127,6 +160,7 @@ export default function Playlists() {
       selectedAlbums: [],
     });
     setShowForm(true);
+    setErrors({});
   };
 
   useEffect(() => {
@@ -155,48 +189,56 @@ export default function Playlists() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-2xl font-semibold underline">
-          Playlist Management
-        </h2>
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer"
-          onClick={openAddForm}
-        >
-          + Playlist
-        </button>
+      <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-7">
+          <div className="justify-self-start">
+            <h2 className="text-2xl font-sans font-semibold underline">
+              Playlist Management
+            </h2>
+          </div>
+
+          <div className="justify-self-center w-full relative max-w-sm">
+            <span className="absolute inset-y-0 left-3 flex items-center pr-3 border-r border-gray-300 text-gray-500">
+              🔍
+            </span>
+            <input
+              type="text"
+              placeholder="Search by title, discription, or albums..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-14 pr-3 py-2 text-sm rounded border border-gray-300 focus:outline-none focus:border-purple-400 !placeholder:text-gray-100"
+            />
+          </div>
+
+          <div className="justify-self-end">
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 cursor-pointer text-sm"
+              onClick={openAddForm}
+            >
+              + Playlist
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="mb-5 text-center">
-        <input
-          type="text"
-          placeholder="Search by title, description, or album title..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
-        />
-      </div>
-
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+      {/* Playlist Table */}
+      <div className="overflow-hidden rounded-lg shadow-lg border border-gray-300">
+        <table className="min-w-full bg-white border border-gray-300">
           <thead className="uppercase text-xs">
-            <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
-              <th className="p-3 border dark:border-gray-600">ID</th>
-              <th className="p-3 border dark:border-gray-600">Image</th>
-              <th className="p-3 border dark:border-gray-600">Title</th>
-              <th className="p-3 border dark:border-gray-600">Description</th>
-              <th className="p-3 border dark:border-gray-600">Albums</th>
-              <th className="p-3 border dark:border-gray-600">Created By</th>
-              <th className="p-3 border dark:border-gray-600">Actions</th>
+            <tr className="bg-gray-200 text-left text-gray-700">
+              <th className="p-3 border border-gray-300">ID</th>
+              <th className="p-3 border border-gray-300">Image</th>
+              <th className="p-3 border border-gray-300">Title</th>
+              <th className="p-3 border border-gray-300">Description</th>
+              <th className="p-3 border border-gray-300">Albums</th>
+              <th className="p-3 border border-gray-300">Created By</th>
+              <th className="p-3 border border-gray-300">Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentPlaylists.length === 0 ? (
               <tr>
-                <td
-                  colSpan="6"
-                  className="p-4 text-center text-gray-500 dark:text-gray-400"
-                >
+                <td colSpan="6" className="p-4 text-center text-gray-500">
                   Playlists Not Found.
                 </td>
               </tr>
@@ -204,12 +246,12 @@ export default function Playlists() {
               currentPlaylists.map((playlist, index) => (
                 <tr
                   key={playlist._id}
-                  className="dark:hover:bg-gray-800 cursor-pointer"
+                  className="hover:bg-gray-100 cursor-pointer"
                 >
-                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
                     {(currentPage - 1) * playlistsPerPage + index + 1}.
-                  </td>{" "}
-                  <td className="p-3 border dark:border-gray-600">
+                  </td>
+                  <td className="p-3 border border-gray-300">
                     {playlist.playlistImage.length > 0 ? (
                       <img
                         src={playlist.playlistImage[0]}
@@ -220,19 +262,19 @@ export default function Playlists() {
                       <span>No Image</span>
                     )}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-white">
-                    {playlist.title || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-900">
+                    {playlist.title || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {playlist.description || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
+                    {playlist.description || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {playlist.albums.map((a) => a.title).join(", ") || "N/A" }
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
+                    {playlist.albums.map((a) => a.title).join(", ") || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
+                  <td className="p-3 border border-gray-300 text-gray-700 text-sm">
                     {playlist.createdBy?.name || "Unknown"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 space-x-2">
+                  <td className="p-3 border border-gray-300 space-x-2">
                     <button
                       className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition duration-300 cursor-pointer"
                       onClick={() => openEditForm(playlist)}
@@ -251,6 +293,7 @@ export default function Playlists() {
             )}
           </tbody>
         </table>
+
         {totalPages > 1 && (
           <div className="flex justify-center mt-4 gap-2">
             {(() => {
@@ -275,7 +318,7 @@ export default function Playlists() {
                       className={`px-3 py-1 rounded ${
                         isCurrent
                           ? "bg-purple-600 text-white cursor-pointer transition duration-300"
-                          : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
+                          : "bg-gray-300 text-gray-800 cursor-pointer transition duration-300"
                       } hover:bg-purple-700 transition`}
                     >
                       {i}
@@ -314,101 +357,110 @@ export default function Playlists() {
       {/* Playlist Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-white/0 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-white p-6 rounded-lg shadow-lg w-96 border border-purple-500">
-          <h2 className="text-2xl font-semibold mb-4 text-center text-purple-600 underline">
-            {editId ? "Update Playlist" : "Add Playlist"}
-          </h2>
-          <form onSubmit={handleFormSubmit}>
-            <div className="mb-4">
-              <label className="block text-sm mb-1 text-black font-semibold">
-                Title
-              </label>
-              <input
-                type="text"
-                className="w-full border px-3 py-2 rounded"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                required
-              />
-            </div>
-      
-            <div className="mb-4">
-              <label className="block text-sm mb-1 text-black font-semibold">
-                Description
-              </label>
-              <textarea
-                className="w-full border px-3 py-2 rounded"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                required
-              ></textarea>
-            </div>
-      
-            <div className="mb-4">
-              <label className="block text-sm mb-1 text-black font-semibold">
-                Image
-              </label>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                name="playlistImage"
-                className="w-full border px-3 py-2 rounded hover:border-purple-400 transition duration-300 cursor-pointer"
-                onChange={(e) =>
-                  setFormData({ ...formData, playlistImage: e.target.files })
-                }
-              />
-            </div>
-      
-            <div className="mb-4">
-              <label className="block text-sm mb-1 text-black font-semibold">
-                Select Albums
-              </label>
-              <select
-                multiple
-                className="w-full border px-3 py-2 rounded"
-                value={formData.selectedAlbums}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    selectedAlbums: Array.from(
-                      e.target.selectedOptions,
-                      (option) => option.value
-                    ),
-                  })
-                }
-              >
-                {albums.map((album) => (
-                  <option key={album._id} value={album._id}>
-                    {album.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-      
-            <div className="flex justify-between">
-              <button
-                type="submit"
-                className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
-              >
-                {editId ? "Update" : "Add"}
-              </button>
-              <button
-                type="button"
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
-                onClick={() => setShowForm(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 border border-purple-500">
+            <h2 className="text-2xl font-semibold mb-4 text-center text-purple-600 underline">
+              {editId ? "Update Playlist" : "Add Playlist"}
+            </h2>
+            <form onSubmit={handleFormSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold">Title</label>
+                <input
+                  type="text"
+                  className="w-full border px-3 py-2 rounded text-sm"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                />
+                {errors.title && (
+                  <p className="text-red-500 text-xs">{errors.title}</p>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold">
+                  Description
+                </label>
+                <textarea
+                  className="w-full border px-3 py-2 rounded text-sm"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                ></textarea>
+                {errors.description && (
+                  <p className="text-red-500 text-xs">{errors.description}</p>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold">Image</label>
+                <input
+                  type="file"
+                  className="w-full border px-3 py-2 rounded text-sm cursor-pointer"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      playlistImage: e.target.files,
+                    })
+                  }
+                />
+                {errors.playlistImage && (
+                  <p className="text-red-500 text-xs">{errors.playlistImage}</p>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold">
+                  Select Albums
+                </label>
+                <select
+                  multiple
+                  className="w-full border px-3 py-2 rounded text-sm"
+                  value={formData.selectedAlbums}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      selectedAlbums: Array.from(
+                        e.target.selectedOptions,
+                        (option) => option.value
+                      ),
+                    })
+                  }
+                >
+                  {albums.map((album) => (
+                    <option key={album._id} value={album._id}>
+                      {album.title}
+                    </option>
+                  ))}
+                </select>
+                {errors.selectedAlbums && (
+                  <p className="text-red-500 text-xs">
+                    {errors.selectedAlbums}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-between">
+                <button
+                  type="submit"
+                  className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-300 cursor-pointer text-sm"
+                >
+                  {editId ? "Update" : "Add"}
+                </button>
+                <button
+                  type="button"
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 transition duration-300 cursor-pointer text-sm"
+                  onClick={() => setShowForm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-      
       )}
     </div>
   );

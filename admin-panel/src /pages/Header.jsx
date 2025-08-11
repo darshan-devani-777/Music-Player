@@ -22,20 +22,10 @@ export default function Header() {
 
       <nav className="flex items-center gap-6">
         <Link
-          to="/register"
-          className={`text-base px-3 py-1 rounded transition duration-300 ${
-            isActive("/register")
-              ? "bg-purple-700 text-white shadow"
-              : "text-purple-400 hover:text-white hover:bg-purple-600"
-          }`}
-        >
-          Register
-        </Link>
-        <Link
           to="/login"
-          className={`text-base px-3 py-1 rounded transition duration-300 ${
+          className={`text-xl px-3 py-1 rounded transition duration-300 ${
             isActive("/login")
-              ? "bg-purple-700 text-white shadow"
+              ? "bg-purple-500 text-white shadow"
               : "text-purple-400 hover:text-white hover:bg-purple-600"
           }`}
         >

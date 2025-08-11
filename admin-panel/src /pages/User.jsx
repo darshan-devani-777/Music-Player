@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [editingUserId, setEditingUserId] = useState(null);
   const [newRole, setNewRole] = useState("");
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [editingUserData, setEditingUserData] = useState({
+    name: "",
+    email: "",
+    role: "",
+    password: "",
+  });
+  const [isEditingAdmin, setIsEditingAdmin] = useState(false); 
+
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 15;
 
-  // FETCH USER
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -18,10 +28,10 @@ export default function Users() {
           Authorization: `Bearer ${token}`,
         },
       });
-      setUsers(res.data.data);
+      setUsers(res.data.data || []);
     } catch (err) {
       console.error("Failed to fetch users:", err);
-      alert("Error fetching users");
+      toast.error("Error fetching users.");
     }
   };
 
@@ -29,10 +39,43 @@ export default function Users() {
     fetchUsers();
   }, []);
 
+  const startEdit = (user) => {
+    setEditingUserId(user._id);
+
+    if (user.role === "admin") {
+      setIsEditingAdmin(true); 
+      setEditingUserData({
+        name: user.name || "",
+        email: user.email || "",
+        role: user.role || "admin",
+        password: "",
+      });
+    } else {
+      setIsEditingAdmin(false); 
+      setEditingUserData({
+        name: "",
+        email: "",
+        role: user.role || "",
+        password: "",
+      });
+      setNewRole(user.role || "");
+    }
+
+    setShowUserForm(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingUserId(null);
+    setNewRole("");
+    setEditingUserData({ name: "", email: "", role: "", password: "" });
+    setIsEditingAdmin(false); 
+    setShowUserForm(false);
+  };
+
   // EDIT USER ROLE
   const handleEditRole = async (userId) => {
-    if (!newRole) {
-      alert("Please select a role");
+    if (!newRole && !editingUserData.role) {
+      toast.error("Please select a role.");
       return;
     }
 
@@ -40,9 +83,7 @@ export default function Users() {
       const token = localStorage.getItem("token");
       await api.put(
         `/auth/users/update-user/${userId}`,
-        {
-          role: newRole,
-        },
+        { role: newRole || editingUserData.role },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -50,17 +91,65 @@ export default function Users() {
         }
       );
 
-      alert("User Role Updated Successfully...");
-      setEditingUserId(null);
-      setNewRole("");
+      toast.success("User Role Updated Successfully...");
+      cancelEdit();
       fetchUsers();
     } catch (err) {
       console.error("Failed to update role:", err);
-      alert("Error updating role");
+      toast.error("Error updating role.");
     }
   };
 
-  // DELETE USER
+  // EDIT ADMIN DETAILS
+  const handleEditAdmin = async (userId) => {
+    if (
+      !editingUserData.name ||
+      !editingUserData.email ||
+      !editingUserData.role
+    ) {
+      toast.error("Please fill name, email and role (password optional)");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const payload = {
+        name: editingUserData.name,
+        email: editingUserData.email,
+        role: editingUserData.role,
+      };
+      if (editingUserData.password?.trim()) {
+        payload.password = editingUserData.password;
+      }
+
+      await api.put(`/auth/users/update-user/${userId}`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const currentUser = JSON.parse(localStorage.getItem("user"));
+      if (currentUser && currentUser._id === userId) {
+        const updatedUser = {
+          ...currentUser,
+          name: editingUserData.name,
+          email: editingUserData.email,
+          role: editingUserData.role,
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      toast.success("Admin Details Updated Successfully...");
+      cancelEdit();
+      fetchUsers();
+    } catch (err) {
+      console.error("Failed to update admin details:", err);
+      toast.error("Error updating admin details.");
+    }
+  };
+
+  // HANDLE DELETE
   const handleDelete = async (userId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this user?"
@@ -75,15 +164,14 @@ export default function Users() {
         },
       });
 
-      alert("User Deleted Successfully...");
+      toast.success("User Deleted Successfully...");
       fetchUsers();
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete user");
+      toast.error("Failed to delete user");
     }
   };
 
-  // FILTER USER
   const filteredUsers = users.filter((user) => {
     const query = searchQuery.toLowerCase();
     return (
@@ -94,11 +182,9 @@ export default function Users() {
     );
   });
 
-  // PAGINATION
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   const handlePageChange = (pageNumber) => {
@@ -107,172 +193,265 @@ export default function Users() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-7 underline text-center">
-        User Management
-      </h2>
-
-      <div className="mb-5 text-center">
-        <input
-          type="text"
-          placeholder="Search by name, email, role, or login type..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border rounded text-sm dark:bg-gray-800 dark:text-white dark:border-blue-500 focus:outline-none focus:border-red-400 !placeholder-gray-300"
-        />
+      {/* Search Header */}
+      <div className="flex items-center justify-between mb-7">
+        <h2 className="text-2xl font-sans font-semibold underline">
+          User Management
+        </h2>
+        <div className="relative w-full max-w-sm">
+          <span className="absolute inset-y-0 left-3 flex items-center pr-3 border-r border-gray-300 text-gray-500">
+            🔍
+          </span>
+          <input
+            type="text"
+            placeholder="Search by name, email, role or login type..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full pl-14 pr-3 py-2 text-sm rounded border border-gray-300 focus:outline-none focus:border-purple-400 !placeholder:text-gray-100"
+          />
+        </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+      {/* Table */}
+      <div className="overflow-hidden rounded-lg shadow-lg border border-gray-300">
+        <table className="min-w-full bg-white border border-gray-300">
           <thead className="uppercase text-xs">
-            <tr className="bg-gray-100 dark:bg-gray-700 text-left text-white">
-              <th className="p-3 border dark:border-gray-600">ID</th>
-              <th className="p-3 border dark:border-gray-600">Name</th>
-              <th className="p-3 border dark:border-gray-600">Email</th>
-              <th className="p-3 border dark:border-gray-600">Role</th>
-              <th className="p-3 border dark:border-gray-600">Login Type</th>
-              <th className="p-3 border dark:border-gray-600">Created At</th>
-              <th className="p-3 border dark:border-gray-600">Actions</th>
+            <tr className="bg-gray-200 text-left text-gray-700">
+              <th className="p-3 border border-gray-300">ID</th>
+              <th className="p-3 border border-gray-300">Name</th>
+              <th className="p-3 border border-gray-300">Email</th>
+              <th className="p-3 border border-gray-300">Role</th>
+              <th className="p-3 border border-gray-300">Login Type</th>
+              <th className="p-3 border border-gray-300">Created At</th>
+              <th className="p-3 border border-gray-300">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.length === 0 ? (
               <tr>
-                <td
-                  colSpan="6"
-                  className="p-4 text-center text-gray-500 dark:text-gray-400"
-                >
+                <td colSpan="7" className="p-4 text-center text-gray-500">
                   Users Not Found.
                 </td>
               </tr>
             ) : (
               currentUsers.map((user, index) => (
-                <tr
-                  key={user._id}
-                  className="dark:hover:bg-gray-800 cursor-pointer"
-                >
-                  <td className="p-3 border dark:border-gray-600 text-gray-300 text-sm">
+                <tr key={user._id} className="hover:bg-gray-50 cursor-pointer">
+                  <td className="p-3 border border-gray-300 text-sm">
                     {(currentPage - 1) * usersPerPage + index + 1}.
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-white">
-                    {user.name || "N/A" }
+                  <td className="p-3 border border-gray-300 text-sm">
+                    {user.name || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {user.email || "N/A" }
+                  <td className="p-3 border border-gray-300 text-sm">
+                    {user.email || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {user.role || "N/A" }
+                  <td className="p-3 border border-gray-300 text-sm">
+                    {user.role || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {user.loginType || "N/A" }
+                  <td className="p-3 border border-gray-300 text-sm">
+                    {user.loginType || "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600 text-gray-400 text-sm">
-                    {new Date(user.createdAt)
-                      .toLocaleString()
-                      .replace(",", " , ")}
+                  <td className="p-3 border border-gray-300 text-sm">
+                    {user.createdAt
+                      ? new Date(user.createdAt)
+                          .toLocaleString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                          .replace(",", " ,")
+                      : "N/A"}
                   </td>
-                  <td className="p-3 border dark:border-gray-600">
-                    {/* Edit Role Button */}
+                  <td className="p-3 border border-gray-300">
                     <button
-                      onClick={() => {
-                        setEditingUserId(user._id);
-                        setNewRole(user.role);
-                      }}
-                      className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition duration-300 mr-2 cursor-pointer"
+                      onClick={() => startEdit(user)}
+                      className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition mr-2 cursor-pointer duration-300"
                     >
-                      Edit Role
+                      {user.role === "admin" ? "Edit Profile" : "Edit Role"}
                     </button>
-
-                    {/* Delete Button */}
                     <button
                       onClick={() => handleDelete(user._id)}
-                      className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-700 transition duration-300 cursor-pointer"
+                      className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-700 transition cursor-pointer duration-300"
                     >
                       Delete
                     </button>
-
-                    {/* Conditionally show role editing form */}
-                    {editingUserId === user._id && (
-                      <div className="mt-2">
-                        <select
-                          value={newRole}
-                          onChange={(e) => setNewRole(e.target.value)}
-                          className="border px-2 py-1 text-sm rounded mr-2 text-white cursor-pointer"
-                        >
-                          <option value="">Select Role</option>
-                          <option value="user">User</option>
-                          <option value="admin">Admin</option>
-                        </select>
-
-                        <button
-                          onClick={() => handleEditRole(user._id)}
-                          className="bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-700 transition duration-300 mr-1 cursor-pointer"
-                        >
-                          Save
-                        </button>
-
-                        <button
-                          onClick={() => setEditingUserId(null)}
-                          className="bg-gray-500 text-white text-sm px-3 py-1 rounded hover:bg-gray-700 transition duration-300 cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-      </div>
-      
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center mt-4 space-x-2">
-            {Array.from({ length: totalPages }, (_, i) => {
-              const page = i + 1;
-              const isFirst = page === 1;
-              const isLast = page === totalPages;
-              const isCurrent = page === currentPage;
-              const isNearCurrent = Math.abs(currentPage - page) <= 1;
 
-              if (
-                totalPages <= 3 ||
-                isFirst ||
-                isLast ||
-                isCurrent ||
-                isNearCurrent
-              ) {
-                return (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-3 py-1 rounded ${
-                      isCurrent
-                        ? "bg-purple-600 text-white cursor-pointer transition duration-300"
-                        : "bg-gray-700 text-gray-300 cursor-pointer transition duration-300"
-                    } hover:bg-purple-700 transition`}
+        {/* Edit Form */}
+        {showUserForm && (
+          <div className="fixed inset-0 bg-white/0 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg shadow-md w-96 border border-purple-500">
+              <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
+                {isEditingAdmin ? "Edit Admin" : "Edit Role"}
+              </h2>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  isEditingAdmin
+                    ? handleEditAdmin(editingUserId)
+                    : handleEditRole(editingUserId);
+                }}
+              >
+                {isEditingAdmin && (
+                  <>
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold mb-1">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        value={editingUserData.name}
+                        onChange={(e) =>
+                          setEditingUserData({
+                            ...editingUserData,
+                            name: e.target.value,
+                          })
+                        }
+                        className="w-full border px-3 py-2 rounded text-sm"
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={editingUserData.email}
+                        onChange={(e) =>
+                          setEditingUserData({
+                            ...editingUserData,
+                            email: e.target.value,
+                          })
+                        }
+                        className="w-full border px-3 py-2 rounded text-sm"
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold mb-1">
+                    Role
+                  </label>
+                  <select
+                    value={editingUserData.role || newRole}
+                    onChange={(e) => {
+                      setEditingUserData({
+                        ...editingUserData,
+                        role: e.target.value,
+                      });
+                      setNewRole(e.target.value);
+                    }}
+                    className="w-full border px-3 py-2 rounded text-sm"
+                    required
                   >
-                    {page}
+                    <option value="">Select Role</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                {isEditingAdmin && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={editingUserData.password}
+                      onChange={(e) =>
+                        setEditingUserData({
+                          ...editingUserData,
+                          password: e.target.value,
+                        })
+                      }
+                      placeholder="Leave blank to keep current"
+                      className="w-full border px-3 py-2 rounded text-sm"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-between">
+                  <button
+                    type="submit"
+                    className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm transition duration-300 cursor-pointer"
+                  >
+                    Save
                   </button>
-                );
-              }
-
-              if (
-                (page === currentPage - 2 && currentPage > 3) ||
-                (page === currentPage + 2 && currentPage < totalPages - 2)
-              ) {
-                return (
-                  <span key={page} className="py-2 text-gray-500">
-                    .....
-                  </span>
-                );
-              }
-
-              return null;
-            })}
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm transition duration-300 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-4 space-x-2">
+          {Array.from({ length: totalPages }, (_, i) => {
+            const page = i + 1;
+            const isCurrent = page === currentPage;
+            const isNearCurrent = Math.abs(currentPage - page) <= 1;
+
+            if (
+              totalPages <= 3 ||
+              page === 1 ||
+              page === totalPages ||
+              isCurrent ||
+              isNearCurrent
+            ) {
+              return (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-3 py-1 rounded ${
+                    isCurrent
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-300 text-gray-500"
+                  } hover:bg-purple-600 hover:text-white transition duration-300 cursor-pointer`}
+                >
+                  {page}
+                </button>
+              );
+            }
+
+            if (
+              (page === currentPage - 2 && currentPage > 3) ||
+              (page === currentPage + 2 && currentPage < totalPages - 2)
+            ) {
+              return (
+                <span key={page} className="py-2 text-gray-500">
+                  .....
+                </span>
+              );
+            }
+
+            return null;
+          })}
+        </div>
+      )}
     </div>
   );
 }
