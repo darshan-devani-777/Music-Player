@@ -32,4 +32,7 @@ const playlistSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Text index for search
+playlistSchema.index({ title: "text", description: "text" });
+
 module.exports = mongoose.model("Playlist", playlistSchema);

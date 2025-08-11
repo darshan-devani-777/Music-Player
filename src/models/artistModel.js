@@ -30,4 +30,7 @@ const artistSchema = new mongoose.Schema({
   validateModifiedOnly: true,
 });
 
+// Text index for search
+artistSchema.index({ name: "text", bio: "text" });
+
 module.exports = mongoose.model("Artist", artistSchema);

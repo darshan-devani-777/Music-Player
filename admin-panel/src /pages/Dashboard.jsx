@@ -379,7 +379,7 @@ export default function Dashboard() {
               🕒 Latest Activities
             </h3>
 
-            {/* Search / Filter controls */}
+            {/* Search */}
             <div className="flex items-center gap-2">
               <select
                 value={searchField}
@@ -431,11 +431,15 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-
+          
+          {/* Table */}
           <div className="mt-5 overflow-x-auto rounded-lg border border-gray-300 bg-white shadow-md">
             <table className="min-w-full text-sm text-left text-gray-700">
               <thead className="text-xs uppercase bg-gray-200 text-gray-800 border-b border-gray-300">
                 <tr>
+                  <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
+                    ID
+                  </th>
                   <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
                     Name
                   </th>
@@ -459,6 +463,9 @@ export default function Dashboard() {
                       key={idx}
                       className="border-b border-gray-300 hover:bg-gray-50 transition cursor-pointer"
                     >
+                      <td className="px-4 sm:px-6 py-4 border-r border-gray-300 text-gray-800 text-[14px] sm:text-[15px]">
+                      {(currentPage - 1) * itemsPerPage + idx + 1}.
+                      </td>
                       <td className="px-4 sm:px-6 py-4 border-r border-gray-300 text-gray-800 text-[14px] sm:text-[15px]">
                         {item.user?.name || "Unknown"}
                       </td>

@@ -8,6 +8,7 @@ const favouriteRoutes = require('./favouriteRoute');
 const activityRoutes = require('./activityRoute');
 const editorRoutes = require('./editorRoute');
 const faqRoutes = require('./faqRoute');
+const searchRoutes = require("./searchRoute");
 
 module.exports = (app) => {
   app.use('/api/auth', userRoutes);
@@ -20,4 +21,5 @@ module.exports = (app) => {
   app.use('/api/auth', activityRoutes);
   app.use('/api/auth', editorRoutes);
   app.use('/api/auth', faqRoutes);
+  app.use("/api/auth", searchRoutes);
 };

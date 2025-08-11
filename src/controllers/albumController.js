@@ -40,7 +40,7 @@ exports.createAlbum = async (req, res) => {
       });
 
     res.status(201).json({
-      status: "success",
+      status: true,
       message: "Album Created Successfully...",
       data: populatedAlbum,
     });
@@ -62,7 +62,7 @@ exports.getAllAlbums = async (req, res) => {
       .populate("artistId", "_id name bio artistImage");
 
     res.status(200).json({
-      status: "success",
+      status: true,
       message: "All Albums Retrieved Successfully...",
       data: albums,
     });
@@ -85,7 +85,7 @@ exports.getNewReleasedAlbums = async (req, res) => {
       .populate("artistId", "_id name bio artistImage");
 
     res.status(200).json({
-      status: "success",
+      status: true,
       message: "Newly Released Albums Retrieved Successfully...",
       data: albums,
     });
@@ -113,7 +113,7 @@ exports.getAlbumById = async (req, res) => {
     }
 
     res.status(200).json({
-      status: "success",
+      status: true,
       message: "Album Retrieved Successfully...",
       data: album,
     });
@@ -170,7 +170,7 @@ exports.updateAlbum = async (req, res) => {
     });
     
     return res.status(200).json({
-      status: "success",
+      status: true,
       message: "Album Updated Successfully...",
       data: updatedAlbum,
     });
@@ -216,7 +216,7 @@ exports.deleteAlbum = async (req, res) => {
     });
 
     res.status(200).json({
-      status: "success",
+      status: true,
       message: "Album Deleted Successfully...",
       data: deletedAlbum,
     });

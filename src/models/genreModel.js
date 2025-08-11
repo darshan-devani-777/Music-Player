@@ -34,4 +34,7 @@ const genreSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Text index for search
+genreSchema.index({ name: "text", description: "text" });
+
 module.exports = mongoose.model("Genre", genreSchema);

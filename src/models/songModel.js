@@ -53,4 +53,7 @@ const songSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Text index for search
+songSchema.index({ title: "text" });
+
 module.exports = mongoose.model("Song", songSchema);

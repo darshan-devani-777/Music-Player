@@ -41,4 +41,7 @@ const albumSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Text index for search
+albumSchema.index({ title: "text" });
+
 module.exports = mongoose.model("Album", albumSchema);
