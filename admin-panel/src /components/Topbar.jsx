@@ -28,6 +28,7 @@ export default function Topbar({ isCollapsed }) {
   const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
   const [showNewPassword, setShowNewPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
@@ -572,6 +573,12 @@ export default function Topbar({ isCollapsed }) {
                         const email = user.email?.trim() || "";
                         const role = user.role?.trim() || "";
 
+                        const oldRole = JSON.parse(
+                          localStorage.getItem("user")
+                        )?.role;
+                        const newRole = role;
+                        const roleChanged = oldRole !== newRole;
+
                         if (!name || !email || !role) {
                           toast.error("Please fill all required fields.");
                           return;
@@ -626,13 +633,12 @@ export default function Topbar({ isCollapsed }) {
                           }
                         );
 
-                        toast.success(
-                          "Profile updated successfully...!"
-                        );
+                        toast.success("Profile updated successfully...!");
 
-                        if (isChangingPassword) {
-                          localStorage.clear();
+                        if (isChangingPassword || roleChanged) {
+                          toast.info("Changes require you to login again...");
                           setTimeout(() => {
+                            localStorage.clear();
                             window.location.href = "/login";
                           }, 3000);
                         } else {
