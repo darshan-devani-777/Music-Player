@@ -627,7 +627,7 @@ export default function Topbar({ isCollapsed }) {
                         );
 
                         toast.success(
-                          "Profile updated successfully! Please Login."
+                          "Profile updated successfully...!"
                         );
 
                         if (isChangingPassword) {
