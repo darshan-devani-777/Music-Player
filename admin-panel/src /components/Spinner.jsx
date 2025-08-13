@@ -1,5 +1,6 @@
 import React from "react";
 
+// LOADER
 const Loader = () => (
   <div
     style={{
