@@ -14,6 +14,7 @@ import EmojiPicker from "emoji-picker-react";
 import imageCompression from "browser-image-compression";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Loader from "../components/Spinner";
 
 export default function PrimeTextEditor() {
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
@@ -23,10 +24,14 @@ export default function PrimeTextEditor() {
   const [bgColor, setBgColor] = useState("#ffffff");
   const [fontSize, setFontSize] = useState("16px");
   const [fontFamily, setFontFamily] = useState("Arial");
+  const [loading, setLoading] = useState(false);
   const editorRef = useRef(null);
   const fileUploadRef = useRef(null);
 
-  const focusEditor = () => editorRef.current.focus();
+  const focusEditor = () => {
+    editorRef.current.focus();
+    setValidationError("");
+  };
 
   const toggleInlineStyle = (style) => {
     setEditorState(RichUtils.toggleInlineStyle(editorState, style));
@@ -141,12 +146,30 @@ export default function PrimeTextEditor() {
   const currentStyle = editorState.getCurrentInlineStyle();
   const blockType = RichUtils.getCurrentBlockType(editorState);
 
+  const validateEditorText = (text) => {
+    // Regex to allow only letters, spaces, and emojis (basic unicode range for emojis)
+    const allowedCharsRegex =
+      /^[a-zA-Z\s\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]*$/u;
+
+    const hasVowelRegex = /[aeiouAEIOU]/;
+
+    if (!allowedCharsRegex.test(text)) {
+      return "Only letters, spaces, and emojis are allowed.";
+    }
+    if (!hasVowelRegex.test(text)) {
+      return "Text must contain at least one vowel (a, e, i, o, u).";
+    }
+    return "";
+  };
+
+  const LOADER_DELAY = 1000;
+
   // SEND CONTENT
   const handleSend = async () => {
     const contentState = editorState.getCurrentContent();
-
+    const plainText = contentState.getPlainText().trim();
     const hasText = contentState.hasText();
-
+  
     const blocks = contentState.getBlockMap();
     const hasImages = blocks.some((block) => {
       if (block.getType() === "atomic") {
@@ -158,20 +181,27 @@ export default function PrimeTextEditor() {
       }
       return false;
     });
-
+  
     if (!hasText && !hasImages) {
       const errorMsg = "Please enter some text or upload at least one image.";
       toast.error(errorMsg);
-      setValidationError(errorMsg); // set error message in state to show below editor
+      setValidationError(errorMsg);
       return;
     }
-
-    // Clear error if validation passes
+  
+    const validationMsg = hasText ? validateEditorText(plainText) : "";
+    if (validationMsg) {
+      toast.error(validationMsg);
+      setValidationError(validationMsg);
+      return;
+    }
+  
     setValidationError("");
-
     const rawContent = convertToRaw(contentState);
     const token = localStorage.getItem("token");
-
+  
+    setLoading(true);
+  
     try {
       await api.post(
         "/auth/editor/add-content",
@@ -183,212 +213,221 @@ export default function PrimeTextEditor() {
           },
         }
       );
-      toast.success("Content Saved Successfully...!");
-      setEditorState(EditorState.createEmpty());
+  
+      setTimeout(() => {
+        setLoading(false); 
+        toast.success("Content Saved Successfully!");
+        setEditorState(EditorState.createEmpty()); 
+      }, 800); 
     } catch (error) {
+      setLoading(false);
       toast.error(
         "Save failed: " +
           (error.response?.data?.message || "Something went wrong")
       );
     }
   };
-
+  
   return (
-    <div className="max-w-full mx-auto p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
-      <h2 className="text-xl font-semibold text-gray-800 underline mb-5">
-        ✍️ Text Editor
-      </h2>
+    <div className="relative">
+      {loading && <Loader />}
+          <div className="max-w-full mx-auto p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
+            <h2 className="text-xl font-semibold text-gray-800 underline mb-5">
+              ✍️ Text Editor
+            </h2>
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap gap-2 items-center border-b border-b-gray-300 mb-8 pb-5">
-        <StyledButton
-          label="𝐁"
-          onClick={() => toggleInlineStyle("BOLD")}
-          active={currentStyle.has("BOLD")}
-        />
+            {/* Toolbar */}
+            <div className="flex flex-wrap gap-2 items-center border-b border-b-gray-300 mb-8 pb-5">
+              <StyledButton
+                label="𝐁"
+                onClick={() => toggleInlineStyle("BOLD")}
+                active={currentStyle.has("BOLD")}
+              />
 
-        <StyledButton
-          label="𝐼"
-          onClick={() => toggleInlineStyle("ITALIC")}
-          active={currentStyle.has("ITALIC")}
-        />
+              <StyledButton
+                label="𝐼"
+                onClick={() => toggleInlineStyle("ITALIC")}
+                active={currentStyle.has("ITALIC")}
+              />
 
-        <StyledButton
-          label="𝑈"
-          onClick={() => toggleInlineStyle("UNDERLINE")}
-          active={currentStyle.has("UNDERLINE")}
-        />
+              <StyledButton
+                label="𝑈"
+                onClick={() => toggleInlineStyle("UNDERLINE")}
+                active={currentStyle.has("UNDERLINE")}
+              />
 
-        <StyledButton
-          label="𝑆"
-          onClick={() => toggleInlineStyle("STRIKETHROUGH")}
-          active={currentStyle.has("STRIKETHROUGH")}
-        />
+              <StyledButton
+                label="𝑆"
+                onClick={() => toggleInlineStyle("STRIKETHROUGH")}
+                active={currentStyle.has("STRIKETHROUGH")}
+              />
 
-        <StyledButton
-          label="•"
-          onClick={() => toggleBlockType("unordered-list-item")}
-          active={blockType === "unordered-list-item"}
-        />
+              <StyledButton
+                label="•"
+                onClick={() => toggleBlockType("unordered-list-item")}
+                active={blockType === "unordered-list-item"}
+              />
 
-        <StyledButton
-          label="1."
-          onClick={() => toggleBlockType("ordered-list-item")}
-          active={blockType === "ordered-list-item"}
-        />
+              <StyledButton
+                label="1."
+                onClick={() => toggleBlockType("ordered-list-item")}
+                active={blockType === "ordered-list-item"}
+              />
 
-        <StyledButton
-          label="❝"
-          onClick={() => toggleBlockType("blockquote")}
-          active={blockType === "blockquote"}
-        />
+              <StyledButton
+                label="❝"
+                onClick={() => toggleBlockType("blockquote")}
+                active={blockType === "blockquote"}
+              />
 
-        <StyledButton
-          label="</>"
-          onClick={() => toggleBlockType("code-block")}
-          active={blockType === "code-block"}
-        />
+              <StyledButton
+                label="</>"
+                onClick={() => toggleBlockType("code-block")}
+                active={blockType === "code-block"}
+              />
 
-        <StyledButton
-          label="⤺"
-          onClick={() => setEditorState(EditorState.undo(editorState))}
-        />
+              <StyledButton
+                label="⤺"
+                onClick={() => setEditorState(EditorState.undo(editorState))}
+              />
 
-        <StyledButton
-          label="⤻"
-          onClick={() => setEditorState(EditorState.redo(editorState))}
-        />
+              <StyledButton
+                label="⤻"
+                onClick={() => setEditorState(EditorState.redo(editorState))}
+              />
 
-        <StyledButton
-          label="❌"
-          onClick={() => setEditorState(EditorState.createEmpty())}
-        />
+              <StyledButton
+                label="❌"
+                onClick={() => setEditorState(EditorState.createEmpty())}
+              />
 
-        {/* Controls */}
-        <label className="text-sm text-gray-500">Text:</label>
-        <input
-          type="color"
-          value={textColor}
-          onChange={(e) => {
-            setTextColor(e.target.value);
-            toggleInlineStyle("COLOR_DYNAMIC");
-          }}
-          className="w-9 h-7 border rounded border-gray-300 cursor-pointer hover:bg-gray-100 active:bg-gray-300"
-        />
+              {/* Controls */}
+              <label className="text-sm text-gray-500">Text:</label>
+              <input
+                type="color"
+                value={textColor}
+                onChange={(e) => {
+                  setTextColor(e.target.value);
+                  toggleInlineStyle("COLOR_DYNAMIC");
+                }}
+                className="w-9 h-7 border rounded border-gray-300 cursor-pointer hover:bg-gray-100 active:bg-gray-300"
+              />
 
-        <label className="text-sm text-gray-500">BG:</label>
-        <input
-          type="color"
-          value={bgColor}
-          onChange={(e) => {
-            setBgColor(e.target.value);
-            toggleInlineStyle("BG_DYNAMIC");
-          }}
-          className="w-9 h-7 border border-gray-300 rounded hover:bg-gray-100 active:bg-gray-300 cursor-pointer"
-        />
+              <label className="text-sm text-gray-500">BG:</label>
+              <input
+                type="color"
+                value={bgColor}
+                onChange={(e) => {
+                  setBgColor(e.target.value);
+                  toggleInlineStyle("BG_DYNAMIC");
+                }}
+                className="w-9 h-7 border border-gray-300 rounded hover:bg-gray-100 active:bg-gray-300 cursor-pointer"
+              />
 
-        <label className="text-sm text-gray-500">Size:</label>
-        <select
-          value={fontSize}
-          onChange={(e) => {
-            setFontSize(e.target.value);
-            toggleInlineStyle("FONT_SIZE");
-          }}
-          className="text-sm px-2 py-1 border border-gray-300 rounded bg-white hover:bg-gray-100 active:bg-gray-300 cursor-pointer text-gray-500"
-        >
-          <option value="12px">12px</option>
-          <option value="14px">14px</option>
-          <option value="16px">16px</option>
-          <option value="18px">18px</option>
-          <option value="24px">24px</option>
-          <option value="32px">32px</option>
-        </select>
+              <label className="text-sm text-gray-500">Size:</label>
+              <select
+                value={fontSize}
+                onChange={(e) => {
+                  setFontSize(e.target.value);
+                  toggleInlineStyle("FONT_SIZE");
+                }}
+                className="text-sm px-2 py-1 border border-gray-300 rounded bg-white hover:bg-gray-100 active:bg-gray-300 cursor-pointer text-gray-500"
+              >
+                <option value="12px">12px</option>
+                <option value="14px">14px</option>
+                <option value="16px">16px</option>
+                <option value="18px">18px</option>
+                <option value="24px">24px</option>
+                <option value="32px">32px</option>
+              </select>
 
-        <label className="text-sm text-gray-500">Font:</label>
-        <select
-          value={fontFamily}
-          onChange={(e) => {
-            setFontFamily(e.target.value);
-            toggleInlineStyle("FONT_FAMILY");
-          }}
-          className="text-sm px-2 py-1 border border-gray-300 rounded bg-white hover:bg-gray-100 active:bg-gray-300 cursor-pointer text-gray-500"
-        >
-          <optgroup label="System Fonts">
-            <option value="Arial">Arial</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Verdana">Verdana</option>
-          </optgroup>
-          <optgroup label="Google Fonts">
-            <option value="Roboto">Roboto</option>
-            <option value="Open Sans">Open Sans</option>
-            <option value="Lato">Lato</option>
-            <option value="Montserrat">Montserrat</option>
-            <option value="Poppins">Poppins</option>
-            <option value="Raleway">Raleway</option>
-            <option value="Nunito">Nunito</option>
-          </optgroup>
-        </select>
+              <label className="text-sm text-gray-500">Font:</label>
+              <select
+                value={fontFamily}
+                onChange={(e) => {
+                  setFontFamily(e.target.value);
+                  toggleInlineStyle("FONT_FAMILY");
+                }}
+                className="text-sm px-2 py-1 border border-gray-300 rounded bg-white hover:bg-gray-100 active:bg-gray-300 cursor-pointer text-gray-500"
+              >
+                <optgroup label="System Fonts">
+                  <option value="Arial">Arial</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Courier New">Courier New</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Verdana">Verdana</option>
+                </optgroup>
+                <optgroup label="Google Fonts">
+                  <option value="Roboto">Roboto</option>
+                  <option value="Open Sans">Open Sans</option>
+                  <option value="Lato">Lato</option>
+                  <option value="Montserrat">Montserrat</option>
+                  <option value="Poppins">Poppins</option>
+                  <option value="Raleway">Raleway</option>
+                  <option value="Nunito">Nunito</option>
+                </optgroup>
+              </select>
 
-        <StyledButton
-          label="😊"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-        />
+              <StyledButton
+                label="😊"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              />
 
-        <FileUpload
-          ref={fileUploadRef}
-          mode="basic"
-          name="image"
-          accept="image/*"
-          customUpload
-          uploadHandler={handleImageUpload}
-          chooseLabel="📸"
-          className="text-sm px-2 py-1 rounded bg-white transition duration-300"
-        />
-      </div>
+              <FileUpload
+                ref={fileUploadRef}
+                mode="basic"
+                name="image"
+                accept="image/*"
+                customUpload
+                uploadHandler={handleImageUpload}
+                chooseLabel="📸"
+                className="text-sm px-2 py-1 rounded bg-white transition duration-300"
+              />
+            </div>
 
-      {/* Emoji Picker */}
-      {showEmojiPicker && (
-        <div className="mb-4 z-50">
-          <EmojiPicker onEmojiClick={handleEmojiClick} />
-        </div>
-      )}
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <div className="mb-4 z-50">
+                <EmojiPicker onEmojiClick={handleEmojiClick} />
+              </div>
+            )}
 
-      {/* TEXT EDITOR */}
-      <div
-        className={`DraftEditor-root min-h-[200px] border text-sm p-4 rounded bg-white overflow-x-auto
+            {/* TEXT EDITOR */}
+            <div
+              className={`DraftEditor-root min-h-[200px] border text-sm p-4 rounded bg-white overflow-x-auto
     ${
       validationError
         ? "border-red-500 focus-within:ring-red-500"
         : "border-gray-300 focus-within:ring-purple-400"
     }`}
-        onClick={focusEditor}
-      >
-        <div className="public-DraftEditor-content break-words whitespace-pre-wrap break-all">
-          <Editor
-            ref={editorRef}
-            editorState={editorState}
-            onChange={setEditorState}
-            placeholder="Start typing here..."
-            blockRendererFn={mediaBlockRenderer}
-            customStyleMap={customStyleMap}
-          />
-        </div>
-      </div>
-      {validationError && (
-        <p className="text-red-600 text-sm mt-1">{validationError}</p>
-      )}
+              onClick={focusEditor}
+            >
+              <div className="public-DraftEditor-content break-words whitespace-pre-wrap break-all">
+                <Editor
+                  ref={editorRef}
+                  editorState={editorState}
+                  onChange={setEditorState}
+                  placeholder="Start typing here..."
+                  blockRendererFn={mediaBlockRenderer}
+                  customStyleMap={customStyleMap}
+                />
+              </div>
+            </div>
 
-      {/* Send button */}
-      <div className="flex justify-end mt-4">
-        <button
-          onClick={handleSend}
-          className="px-4 py-2 text-sm text-white bg-purple-600 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
-        >
-          📤 Send
-        </button>
-      </div>
+            {validationError && (
+              <p className="text-red-600 text-sm mt-1">{validationError}</p>
+            )}
+
+            {/* Send button */}
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={handleSend}
+                className="px-4 py-2 text-sm text-white bg-purple-600 rounded hover:bg-purple-700 transition duration-300 cursor-pointer"
+              >
+                📤 Send
+              </button>
+            </div>
+          </div>
     </div>
   );
 }

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../api/axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Loader from "../components/Spinner";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -14,26 +15,15 @@ export default function Users() {
     role: "",
     password: "",
   });
-  const [isEditingAdmin, setIsEditingAdmin] = useState(false); 
+  const [isEditingAdmin, setIsEditingAdmin] = useState(false);
+  const [loading, setLoading] = useState(true); 
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 15;
+  const userFormRef = useRef();
 
-  const fetchUsers = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await api.get("auth/users/get-all-user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setUsers(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-      toast.error("Error fetching users.");
-    }
-  };
+  const currentUser = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     fetchUsers();
@@ -43,7 +33,7 @@ export default function Users() {
     setEditingUserId(user._id);
 
     if (user.role === "admin") {
-      setIsEditingAdmin(true); 
+      setIsEditingAdmin(true);
       setEditingUserData({
         name: user.name || "",
         email: user.email || "",
@@ -51,7 +41,7 @@ export default function Users() {
         password: "",
       });
     } else {
-      setIsEditingAdmin(false); 
+      setIsEditingAdmin(false);
       setEditingUserData({
         name: "",
         email: "",
@@ -68,22 +58,46 @@ export default function Users() {
     setEditingUserId(null);
     setNewRole("");
     setEditingUserData({ name: "", email: "", role: "", password: "" });
-    setIsEditingAdmin(false); 
+    setIsEditingAdmin(false);
     setShowUserForm(false);
+  };
+
+  const LOADER_DELAY = 1000;
+
+  // FETCH USER
+  const fetchUsers = async () => {
+    try {
+      setLoading(true); 
+      const token = localStorage.getItem("token");
+      const res = await api.get("auth/users/get-all-user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUsers(res.data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      toast.error("Error fetching users.");
+    } finally {
+      setTimeout(() => setLoading(false), LOADER_DELAY);
+    }
   };
 
   // EDIT USER ROLE
   const handleEditRole = async (userId) => {
-    if (!newRole && !editingUserData.role) {
+    const roleToUpdate = (newRole || editingUserData.role)?.trim();
+
+    if (!roleToUpdate) {
       toast.error("Please select a role.");
       return;
     }
 
     try {
+      setLoading(true); 
       const token = localStorage.getItem("token");
       await api.put(
         `/auth/users/update-user/${userId}`,
-        { role: newRole || editingUserData.role },
+        { role: roleToUpdate },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -96,30 +110,55 @@ export default function Users() {
       fetchUsers();
     } catch (err) {
       console.error("Failed to update role:", err);
-      toast.error("Error updating role.");
+      const message = err?.response?.data?.message || "Error updating role.";
+      toast.error(message);
+    } finally {
+      setTimeout(() => setLoading(false), LOADER_DELAY);
     }
   };
 
-  // EDIT ADMIN DETAILS
+  // EDIT ADMIN DETAIL
   const handleEditAdmin = async (userId) => {
-    if (
-      !editingUserData.name ||
-      !editingUserData.email ||
-      !editingUserData.role
-    ) {
-      toast.error("Please fill name, email and role (password optional)");
+    const name = editingUserData.name?.trim() || "";
+    const email = editingUserData.email?.trim() || "";
+    const role = editingUserData.role?.trim() || "";
+
+    if (!name || !email || !role) {
+      toast.error(
+        "Please fill name, email and role (password fields optional)"
+      );
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    const { oldPassword, newPassword, confirmPassword } = editingUserData;
+    const isChangingPassword = oldPassword || newPassword || confirmPassword;
+
+    if (isChangingPassword) {
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        toast.error("Please fill all password fields to change password");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast.error("New password and confirm password do not match");
+        return;
+      }
+    }
+
     try {
+      setLoading(true); 
       const token = localStorage.getItem("token");
-      const payload = {
-        name: editingUserData.name,
-        email: editingUserData.email,
-        role: editingUserData.role,
-      };
-      if (editingUserData.password?.trim()) {
-        payload.password = editingUserData.password;
+      const payload = { name, email, role };
+
+      if (isChangingPassword) {
+        payload.oldPassword = oldPassword;
+        payload.newPassword = newPassword;
+        payload.confirmPassword = confirmPassword;
       }
 
       await api.put(`/auth/users/update-user/${userId}`, payload, {
@@ -128,14 +167,19 @@ export default function Users() {
         },
       });
 
+      if (isChangingPassword) {
+        localStorage.clear();
+        toast.success("Password updated. Please login again.");
+
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 3000);
+        return;
+      }
+
       const currentUser = JSON.parse(localStorage.getItem("user"));
       if (currentUser && currentUser._id === userId) {
-        const updatedUser = {
-          ...currentUser,
-          name: editingUserData.name,
-          email: editingUserData.email,
-          role: editingUserData.role,
-        };
+        const updatedUser = { ...currentUser, name, email, role };
         localStorage.setItem("user", JSON.stringify(updatedUser));
         window.dispatchEvent(new Event("storage"));
       }
@@ -143,13 +187,24 @@ export default function Users() {
       toast.success("Admin Details Updated Successfully...");
       cancelEdit();
       fetchUsers();
+
+      setEditingUserData((prev) => ({
+        ...prev,
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
     } catch (err) {
       console.error("Failed to update admin details:", err);
-      toast.error("Error updating admin details.");
+      const message =
+        err?.response?.data?.message || "Error updating admin details.";
+      toast.error(message);
+    } finally {
+      setTimeout(() => setLoading(false), LOADER_DELAY);
     }
   };
 
-  // HANDLE DELETE
+  // DELETE USER
   const handleDelete = async (userId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this user?"
@@ -157,6 +212,7 @@ export default function Users() {
     if (!confirmed) return;
 
     try {
+      setLoading(true); 
       const token = localStorage.getItem("token");
       await api.delete(`auth/users/delete-user/${userId}`, {
         headers: {
@@ -168,7 +224,11 @@ export default function Users() {
       fetchUsers();
     } catch (err) {
       console.error("Delete failed:", err);
-      toast.error("Failed to delete user");
+      const errorMessage =
+        err?.response?.data?.message || "Failed to delete user";
+      toast.error(errorMessage);
+    } finally {
+      setTimeout(() => setLoading(false), LOADER_DELAY);
     }
   };
 
@@ -191,31 +251,49 @@ export default function Users() {
     setCurrentPage(pageNumber);
   };
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userFormRef.current && !userFormRef.current.contains(event.target)) {
+        cancelEdit();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div>
-      {/* Search Header */}
-      <div className="flex items-center justify-between mb-7">
-        <h2 className="text-2xl font-sans font-semibold underline">
-          User Management
-        </h2>
-        <div className="relative w-full max-w-sm">
-          <span className="absolute inset-y-0 left-3 flex items-center pr-3 border-r border-gray-300 text-gray-500">
-            🔍
-          </span>
-          <input
-            type="text"
-            placeholder="Search by name, email, role or login type..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full pl-14 pr-3 py-2 text-sm rounded border border-gray-300 focus:outline-none focus:border-purple-400 !placeholder:text-gray-100"
-          />
-        </div>
-      </div>
+      {/* Loader */}
+      {loading && <Loader />}
 
-      {/* Table */}
+      {/* Search Header */}
+      {!loading && (
+        <>
+          <div className="flex items-center justify-between mb-7">
+            <h2 className="text-2xl font-sans font-semibold underline">
+              User Management
+            </h2>
+            <div className="relative w-full max-w-sm">
+              <span className="absolute inset-y-0 left-3 flex items-center pr-3 border-r border-gray-300 text-gray-500">
+                🔍
+              </span>
+              <input
+                type="text"
+                placeholder="Search by name, email, role or login type..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full pl-14 pr-3 py-2 text-sm rounded border border-gray-300 focus:outline-none focus:border-purple-400 !placeholder:text-gray-100"
+              />
+            </div>
+          </div>
+
+           {/* Table */}
       <div className="overflow-hidden rounded-lg shadow-lg border border-gray-300">
         <table className="min-w-full bg-white border border-gray-300">
           <thead className="uppercase text-xs">
@@ -271,10 +349,19 @@ export default function Users() {
                   <td className="p-3 border border-gray-300">
                     <button
                       onClick={() => startEdit(user)}
-                      className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition mr-2 cursor-pointer duration-300"
+                      disabled={
+                        user.role === "admin" && user._id !== currentUser._id
+                      }
+                      className={`bg-blue-500 text-white text-sm px-3 py-1 rounded transition mr-2 duration-300
+    ${
+      user.role === "admin" && user._id !== currentUser._id
+        ? "opacity-70 cursor-not-allowed"
+        : "hover:bg-blue-700 cursor-pointer"
+    }`}
                     >
                       {user.role === "admin" ? "Edit Profile" : "Edit Role"}
                     </button>
+
                     <button
                       onClick={() => handleDelete(user._id)}
                       className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-700 transition cursor-pointer duration-300"
@@ -291,7 +378,10 @@ export default function Users() {
         {/* Edit Form */}
         {showUserForm && (
           <div className="fixed inset-0 bg-white/0 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-md w-96 border border-purple-500">
+            <div
+              ref={userFormRef}
+              className="bg-white p-6 rounded-lg shadow-md w-96 border border-purple-500"
+            >
               <h2 className="text-2xl font-semibold mb-4 text-center text-purple-500 underline">
                 {isEditingAdmin ? "Edit Admin" : "Edit Role"}
               </h2>
@@ -357,7 +447,7 @@ export default function Users() {
                       });
                       setNewRole(e.target.value);
                     }}
-                    className="w-full border px-3 py-2 rounded text-sm"
+                    className="w-full border px-3 py-2 rounded text-sm cursor-pointer"
                     required
                   >
                     <option value="">Select Role</option>
@@ -367,23 +457,64 @@ export default function Users() {
                 </div>
 
                 {isEditingAdmin && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold mb-1">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      value={editingUserData.password}
-                      onChange={(e) =>
-                        setEditingUserData({
-                          ...editingUserData,
-                          password: e.target.value,
-                        })
-                      }
-                      placeholder="Leave blank to keep current"
-                      className="w-full border px-3 py-2 rounded text-sm"
-                    />
-                  </div>
+                  <>
+                    {/* Current Password */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold mb-1">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        value={editingUserData.oldPassword || ""}
+                        onChange={(e) =>
+                          setEditingUserData({
+                            ...editingUserData,
+                            oldPassword: e.target.value,
+                          })
+                        }
+                        placeholder="Enter current password"
+                        className="w-full border px-3 py-2 rounded text-sm"
+                      />
+                    </div>
+
+                    {/* New Password */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold mb-1">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={editingUserData.newPassword || ""}
+                        onChange={(e) =>
+                          setEditingUserData({
+                            ...editingUserData,
+                            newPassword: e.target.value,
+                          })
+                        }
+                        placeholder="Enter new password"
+                        className="w-full border px-3 py-2 rounded text-sm"
+                      />
+                    </div>
+
+                    {/* Confirm New Password */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold mb-1">
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={editingUserData.confirmPassword || ""}
+                        onChange={(e) =>
+                          setEditingUserData({
+                            ...editingUserData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                        placeholder="Confirm new password"
+                        className="w-full border px-3 py-2 rounded text-sm"
+                      />
+                    </div>
+                  </>
                 )}
 
                 <div className="flex justify-between">
@@ -451,6 +582,8 @@ export default function Users() {
             return null;
           })}
         </div>
+      )}
+        </>
       )}
     </div>
   );

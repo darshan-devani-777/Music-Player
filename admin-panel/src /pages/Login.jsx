@@ -11,7 +11,8 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({}); 
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
 
   const from = location.state?.from?.pathname || "/dashboard";
 
@@ -119,10 +120,10 @@ export default function Login() {
         </div>
 
         {/* Password Input */}
-        <div className="">
+        <div className="relative">
           <label className="block mb-1 text-black">Password:</label>
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             className={`w-full bg-gray-100 text-gray-600 border px-3 py-2 rounded focus:outline-none focus:ring-1 ${
               errors.password
                 ? "border-red-500 focus:ring-red-500"
@@ -131,6 +132,15 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          {/* Show/Hide Button */}
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-900 text-sm select-none cursor-pointer"
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+
           {errors.password && (
             <p className="text-red-500 text-xs mt-1">{errors.password}</p>
           )}

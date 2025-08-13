@@ -4,6 +4,8 @@ import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Loader from "../components/Spinner";
+
 import {
   FaUsers,
   FaHeadphones,
@@ -20,9 +22,10 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  Tooltip,
 } from "chart.js";
 
-Chart.register(CategoryScale, LinearScale, PointElement, LineElement);
+Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
 export default function Dashboard() {
   const [userCount, setUserCount] = useState(0);
@@ -37,16 +40,20 @@ export default function Dashboard() {
   const [searchField, setSearchField] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 10;
   const navigate = useNavigate();
   const activitiesRef = useRef(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAllData = async () => {
+      setLoading(true);
+
       try {
         const token = localStorage.getItem("token");
         const config = { headers: { Authorization: `Bearer ${token}` } };
 
+        // FETCH DASHBOARD COUNT
         const [
           userRes,
           artistRes,
@@ -90,71 +97,26 @@ export default function Dashboard() {
         setGenreCount(genreRes.data.data.length);
         setSongCount(songRes.data.data.length);
         setFavouriteCount(favouriteRes.data.favourites.length);
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        toast.error("Failed to load dashboard data.");
-      }
-    };
 
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    api
-      .get("http://localhost:5000/api/auth/activities/recent", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((res) => {
-        if (res.data.success) {
-          setActivities(res.data.data);
+        // FETCH RECENT ACTIVITY
+        const activitiesRes = await api.get(
+          "http://localhost:5000/api/auth/activities/recent",
+          config
+        );
+        if (activitiesRes.data.success) {
+          setActivities(activitiesRes.data.data);
         }
-      })
-      .catch((err) => {
-        console.error("Error fetching activities:", err);
-      });
-  }, []);
 
-  // GET CHARTS
-  useEffect(() => {
-    const fetchUserGrowth = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await api.get("/auth/activities/get-user-additions", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.data.success && Array.isArray(res.data.data)) {
-          const chartLabels = res.data.data.map((item) => item.date);
-          const chartCounts = res.data.data.map((item) => item.count);
-
+        // FETCH CHART DATA
+        const chartRes = await api.get(
+          "/auth/activities/get-user-additions",
+          config
+        );
+        if (chartRes.data.success && Array.isArray(chartRes.data.data)) {
+          const chartLabels = chartRes.data.data.map((item) => item.date);
+          const chartCounts = chartRes.data.data.map((item) => item.count);
           const maxCount = Math.max(...chartCounts);
           const suggestedMax = Math.ceil((maxCount + 2) / 5) * 5;
-
-          const chartOptions = {
-            responsive: true,
-            plugins: {
-              legend: {
-                display: true,
-                position: "top",
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                suggestedMax: suggestedMax,
-                ticks: {
-                  stepSize: 1,
-                  callback: function (value) {
-                    if (Number.isInteger(value)) return value;
-                  },
-                },
-              },
-            },
-          };
 
           setChartData({
             labels: chartLabels,
@@ -168,15 +130,44 @@ export default function Dashboard() {
                 fill: true,
               },
             ],
-            options: chartOptions,
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: true, position: "top" },
+                tooltip: {
+                  enabled: true,
+                  mode: "index",
+                  intersect: false,
+                  callbacks: {
+                    label: (context) =>
+                      `📅 ${context.label}: ${context.parsed.y} users joined`,
+                  },
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  suggestedMax,
+                  ticks: {
+                    stepSize: 1,
+                    callback: (value) =>
+                      Number.isInteger(value) ? value : null,
+                  },
+                },
+              },
+            },
           });
         }
+        await new Promise((resolve) => setTimeout(resolve, 700));
       } catch (err) {
-        console.error("Error loading user growth data:", err);
+        console.error("Error fetching dashboard data:", err);
+        toast.error("Failed to load dashboard data.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserGrowth();
+    fetchAllData();
   }, []);
 
   const cards = [
@@ -318,263 +309,274 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 px-2 sm:px-4">
-      <style>
-        {`
+      {loading ? (
+        <Loader /> // loader shows while loading is true
+      ) : (
+        <>
+          <style>
+            {`
           @keyframes scroll-right {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(100%); }
           }
         `}
-      </style>
+          </style>
 
-      <div className="flex flex-wrap justify-center sm:justify-between gap-4 p-2 sm:p-4 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
-        <div
-          className="flex gap-3 animate-[scroll-right_7s_linear_infinite]"
-          style={{ whiteSpace: "nowrap" }}
-        >
-          <div className="text-2xl sm:text-3xl mt-1">🚀</div>
-          <div>
-            <h1 className="text-base sm:text-lg font-semibold">
-              Welcome Back,{" "}
-              <span className="text-black">
-                {JSON.parse(localStorage.getItem("user"))?.name || "Admin"}
-              </span>
-              !
-            </h1>
-
-            <p className="text-xs sm:text-sm text-gray-300">
-              Stay in control of your dashboard with real-time updates.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {cards.map((card, idx) => (
-          <div
-            key={idx}
-            onClick={() => navigate(card.link)}
-            className={`p-3 ${card.color} text-white rounded-xl shadow-lg cursor-pointer hover:scale-[1.03] transition-all`}
-          >
-            <div className="flex items-center justify-between">
+          <div className="flex flex-wrap justify-center sm:justify-between gap-4 p-2 sm:p-4 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
+            <div
+              className="flex gap-3 animate-[scroll-right_7s_linear_infinite]"
+              style={{ whiteSpace: "nowrap" }}
+            >
+              <div className="text-2xl sm:text-3xl mt-1">🚀</div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold">
-                  {card.label}
-                </h3>
-                <p className="text-2xl sm:text-3xl font-semibold mt-1">
-                  {card.count}
+                <h1 className="text-base sm:text-lg font-semibold">
+                  Welcome Back,{" "}
+                  <span className="text-black">
+                    {JSON.parse(localStorage.getItem("user"))?.name || "Admin"}
+                  </span>
+                  !
+                </h1>
+
+                <p className="text-xs sm:text-sm text-gray-300">
+                  Stay in control of your dashboard with real-time updates.
                 </p>
               </div>
-              <div className="text-2xl sm:text-3xl opacity-80">{card.icon}</div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Recent Activity */}
-      <div>
-        <div ref={activitiesRef} className="scroll-mt-24">
-          <div className="flex items-center justify-between mt-12">
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 underline">
-              🕒 Latest Activities
-            </h3>
-
-            {/* Search */}
-            <div className="flex items-center gap-2">
-              <select
-                value={searchField}
-                onChange={(e) => {
-                  setSearchField(e.target.value);
-                  setSearchTerm("");
-                }}
-                className="text-sm px-2 py-1 border rounded-md outline-none text-gray-500 cursor-pointer focus:border-purple-500 focus:ring-0 focus:ring-purple-500"
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {cards.map((card, idx) => (
+              <div
+                key={idx}
+                onClick={() => navigate(card.link)}
+                className={`p-3 ${card.color} text-white rounded-xl shadow-lg cursor-pointer hover:scale-[1.03] transition-all`}
               >
-                <option value="all">All</option>
-                <option value="name">Name</option>
-                <option value="email">Email</option>
-                <option value="action">Action</option>
-                <option value="target">Target</option>
-                <option value="date">Date</option>
-              </select>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold">
+                      {card.label}
+                    </h3>
+                    <p className="text-2xl sm:text-3xl font-semibold mt-1">
+                      {card.count}
+                    </p>
+                  </div>
+                  <div className="text-2xl sm:text-3xl opacity-80">
+                    {card.icon}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
 
-              {searchField !== "date" ? (
-                <input
-                  type="text"
-                  placeholder={
-                    searchField === "all"
-                      ? "Search by all..."
-                      : `Search ${searchField}...`
-                  }
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="text-[12px] px-3 py-1 border rounded-md outline-none text-gray-500 w-48 
+          {/* Recent Activity */}
+          <div>
+            <div ref={activitiesRef} className="scroll-mt-24">
+              <div className="flex items-center justify-between mt-12">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 underline">
+                  🕒 Latest Activities
+                </h3>
+
+                {/* Search */}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={searchField}
+                    onChange={(e) => {
+                      setSearchField(e.target.value);
+                      setSearchTerm("");
+                    }}
+                    className="text-sm px-2 py-1 border rounded-md outline-none text-gray-500 cursor-pointer focus:border-purple-500 focus:ring-0 focus:ring-purple-500"
+                  >
+                    <option value="all">All</option>
+                    <option value="name">Name</option>
+                    <option value="email">Email</option>
+                    <option value="action">Action</option>
+                    <option value="target">Target</option>
+                    <option value="date">Date</option>
+                  </select>
+
+                  {searchField !== "date" ? (
+                    <input
+                      type="text"
+                      placeholder={
+                        searchField === "all"
+                          ? "Search by all..."
+                          : `Search ${searchField}...`
+                      }
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="text-[12px] px-3 py-1 border rounded-md outline-none text-gray-500 w-48 
              focus:border-purple-500 focus:ring-0 focus:ring-purple-500"
-                />
-              ) : (
-                <input
-                  type="date"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="text-sm px-2 py-1 border rounded-md outline-none w-48"
-                />
-              )}
+                    />
+                  ) : (
+                    <input
+                      type="date"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="text-sm px-2 py-1 border rounded-md outline-none w-48"
+                    />
+                  )}
 
-              {/* Clear button */}
-              <button
-                onClick={() => {
-                  setSearchField("all");
-                  setSearchTerm("");
-                }}
-                className="text-sm px-2 py-1 border rounded-md bg-gray-200 hover:bg-gray-300 transition duration-300 cursor-pointer text-gray-600"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-          
-          {/* Table */}
-          <div className="mt-5 overflow-x-auto rounded-lg border border-gray-300 bg-white shadow-md">
-            <table className="min-w-full text-sm text-left text-gray-700">
-              <thead className="text-xs uppercase bg-gray-200 text-gray-800 border-b border-gray-300">
-                <tr>
-                  <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
-                    ID
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
-                    Name
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
-                    Email
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
-                    Action
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
-                    Target
-                  </th>
-                  <th className="px-4 sm:px-6 py-3">Date</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {paginatedActivities.length > 0 ? (
-                  paginatedActivities.map((item, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-b border-gray-300 hover:bg-gray-50 transition cursor-pointer"
-                    >
-                      <td className="px-4 sm:px-6 py-4 border-r border-gray-300 text-gray-800 text-[14px] sm:text-[15px]">
-                      {(currentPage - 1) * itemsPerPage + idx + 1}.
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 border-r border-gray-300 text-gray-800 text-[14px] sm:text-[15px]">
-                        {item.user?.name || "Unknown"}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 border-r border-gray-300">
-                        {item.user?.email || "N/A"}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 border-r border-gray-300 capitalize">
-                        {item.action?.replaceAll("_", " ") || "—"}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 border-r border-gray-300">
-                        {item.targetType || "—"}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-gray-600">
-                        {item.createdAt
-                          ? new Date(item.createdAt)
-                              .toLocaleString("en-GB", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: true,
-                              })
-                              .replace(",", " ,")
-                          : "N/A"}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center py-4 text-gray-500">
-                      No Recent Activities Found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination controls */}
-          <div className="mt-5 flex items-center justify-between gap-4">
-            <div className="text-sm text-gray-600">
-              Showing{" "}
-              <strong>
-                {Math.min(
-                  (currentPage - 1) * itemsPerPage + 1,
-                  totalItems || 0
-                )}
-              </strong>{" "}
-              to{" "}
-              <strong>
-                {Math.min(currentPage * itemsPerPage, totalItems)}
-              </strong>{" "}
-              of <strong>{totalItems}</strong> entries
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border rounded disabled:opacity-50 cursor-pointer hover:bg-gray-300 transition duration-300"
-              >
-                Prev
-              </button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .slice(
-                    Math.max(0, currentPage - 4),
-                    Math.min(totalPages, currentPage + 3)
-                  )
-                  .map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => goToPage(p)}
-                      className={`px-3 py-1 border rounded cursor-pointer hover:bg-gray-200 ${
-                        p === currentPage
-                          ? "bg-gray-700 text-white hover:bg-gray-800"
-                          : ""
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
+                  {/* Clear button */}
+                  <button
+                    onClick={() => {
+                      setSearchField("all");
+                      setSearchTerm("");
+                    }}
+                    className="text-sm px-2 py-1 border rounded-md bg-gray-200 hover:bg-gray-300 transition duration-300 cursor-pointer text-gray-600"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
 
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-50 cursor-pointer hover:bg-gray-300 transition duration-300"
-              >
-                Next
-              </button>
+              {/* Table */}
+              <div className="mt-5 overflow-x-auto rounded-lg border border-gray-300 bg-white shadow-md">
+                <table className="min-w-full text-sm text-left text-gray-700">
+                  <thead className="text-xs uppercase bg-gray-200 text-gray-800 border-b border-gray-300">
+                    <tr>
+                      <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
+                        ID
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
+                        Name
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
+                        Email
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
+                        Action
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 border-r border-gray-300">
+                        Target
+                      </th>
+                      <th className="px-4 sm:px-6 py-3">Date</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {paginatedActivities.length > 0 ? (
+                      paginatedActivities.map((item, idx) => (
+                        <tr
+                          key={idx}
+                          className="border-b border-gray-300 hover:bg-gray-50 transition cursor-pointer"
+                        >
+                          <td className="px-4 sm:px-6 py-4 border-r border-gray-300 text-gray-800 text-[14px] sm:text-[15px]">
+                            {(currentPage - 1) * itemsPerPage + idx + 1}.
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 border-r border-gray-300 text-gray-800 text-[14px] sm:text-[15px]">
+                            {item.user?.name || "Unknown"}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 border-r border-gray-300">
+                            {item.user?.email || "N/A"}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 border-r border-gray-300 capitalize">
+                            {item.action?.replaceAll("_", " ") || "—"}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 border-r border-gray-300">
+                            {item.targetType || "—"}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-gray-600">
+                            {item.createdAt
+                              ? new Date(item.createdAt)
+                                  .toLocaleString("en-GB", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })
+                                  .replace(",", " ,")
+                              : "N/A"}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="text-center py-4 text-gray-500"
+                        >
+                          No Recent Activities Found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination controls */}
+              <div className="mt-5 flex items-center justify-between gap-4">
+                <div className="text-sm text-gray-600">
+                  Showing{" "}
+                  <strong>
+                    {Math.min(
+                      (currentPage - 1) * itemsPerPage + 1,
+                      totalItems || 0
+                    )}
+                  </strong>{" "}
+                  to{" "}
+                  <strong>
+                    {Math.min(currentPage * itemsPerPage, totalItems)}
+                  </strong>{" "}
+                  of <strong>{totalItems}</strong> entries
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border rounded disabled:opacity-50 cursor-pointer hover:bg-gray-300 transition duration-300"
+                  >
+                    Prev
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .slice(
+                        Math.max(0, currentPage - 4),
+                        Math.min(totalPages, currentPage + 3)
+                      )
+                      .map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => goToPage(p)}
+                          className={`px-3 py-1 border rounded cursor-pointer hover:bg-gray-200 ${
+                            p === currentPage
+                              ? "bg-gray-700 text-white hover:bg-gray-800"
+                              : ""
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                  </div>
+
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 border rounded disabled:opacity-50 cursor-pointer hover:bg-gray-300 transition duration-300"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* User Growth Chart */}
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow mt-10">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 underline">
+                📈 User Growth
+              </h3>
+              {chartData ? (
+                <Line data={chartData} options={chartData.options} />
+              ) : (
+                <p className="text-gray-600">Loading chart...</p>
+              )}
             </div>
           </div>
-        </div>
-
-        {/* User Growth Chart */}
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow mt-10">
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 underline">
-            📈 User Growth
-          </h3>
-          {chartData ? (
-            <Line data={chartData} options={chartData.options} />
-          ) : (
-            <p className="text-gray-600">Loading chart...</p>
-          )}
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

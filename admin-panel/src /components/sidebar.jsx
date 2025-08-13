@@ -63,10 +63,10 @@ export default function Sidebar() {
     fixed inset-y-0 left-0 z-40 bg-gray-900 text-white shadow-lg
     transition-all duration-300
     ${isCollapsed ? "w-20" : "w-64"}
-    h-screen flex flex-col justify-between
+    h-screen flex flex-col
   `}
       >
-        {/* Collapse + Title */}
+        {/* Admin Panel + Collapse Button */}
         <div className={`w-full ${isCollapsed ? "py-4" : "p-4"}`}>
           <div
             className={`flex w-full ${
@@ -74,7 +74,7 @@ export default function Sidebar() {
             }`}
           >
             {!isCollapsed && (
-              <h1 className="text-2xl font-semibold text-purple-400 underline">
+              <h1 className="text-2xl font-semibold text-purple-400 underline mr-2">
                 Admin Panel
               </h1>
             )}
@@ -89,10 +89,11 @@ export default function Sidebar() {
         </div>
 
         {/* Nav Items */}
-        <div
-          className={`flex flex-col gap-2 w-full ${
+        <nav
+          className={`flex flex-col gap-2 w-full flex-1 overflow-y-auto mt-4 ${
             isCollapsed ? "items-center" : "items-start px-2"
-          }`}
+          } scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-gray-800`}
+          style={{ maxHeight: "calc(100vh - 112px)" }} height
         >
           {navItems.map(({ to, icon, label }, i) => (
             <NavLink
@@ -108,15 +109,20 @@ export default function Sidebar() {
               )}
             </NavLink>
           ))}
-        </div>
+        </nav>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <div className="w-full p-4">
           <button
             className={`flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition w-full cursor-pointer ${
               isCollapsed ? "justify-center px-2" : "justify-center"
             }`}
             onClick={() => {
+              const confirmLogout = window.confirm(
+                "Are you sure you want to log out?"
+              );
+              if (!confirmLogout) return;
+
               localStorage.removeItem("token");
               localStorage.removeItem("user");
 

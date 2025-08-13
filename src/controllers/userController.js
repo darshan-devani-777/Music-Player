@@ -305,20 +305,29 @@ exports.deleteUser = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    const deletedUser = await User.findByIdAndDelete(userId);
+    const userToDelete = await User.findById(userId);
 
-    if (!deletedUser) {
+    if (!userToDelete) {
       return res.status(404).json({
         status: false,
         message: "User not found",
       });
     }
 
+    if (userToDelete.role === "admin") {
+      return res.status(403).json({
+        status: false,
+        message: "Admin cannot be deleted.",
+      });
+    }
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+
     await Activity.create({
-      user: req.user ? req.user._id : null, 
-      action: 'Delete_user',
-      targetType: 'User',                 
-      targetId: deletedUser._id,          
+      user: req.user ? req.user._id : null,
+      action: "Delete_user",
+      targetType: "User",
+      targetId: deletedUser._id,
     });
 
     res.status(200).json({

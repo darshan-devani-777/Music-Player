@@ -25,11 +25,22 @@ export default function Topbar({ isCollapsed }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [activities, setActivities] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
+  const [showNewPassword, setShowNewPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const modalRef = useRef();
+  const [initialUser, setInitialUser] = useState(null);
+
+  useEffect(() => {
+    if (showProfileModal) {
+      setInitialUser(user);
+    }
+  }, [showProfileModal]);
 
   const pathSegments =
     location.pathname === "/"
@@ -120,6 +131,20 @@ export default function Topbar({ isCollapsed }) {
     };
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setIsEditing(false);
+        setShowProfileModal(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // RECENT ACTIVITY / SEEN COUNT
   const handleBellClick = async () => {
     try {
@@ -155,6 +180,9 @@ export default function Topbar({ isCollapsed }) {
 
   // LOGOUT
   const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (!confirmLogout) return;
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
@@ -327,7 +355,10 @@ export default function Topbar({ isCollapsed }) {
       {showProfileModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="w-full h-full flex items-center justify-center">
-            <div className="p-6 w-[90%] max-w-md text-center relative bg-gray-900 rounded-xl shadow-2xl border-1 border-purple-700">
+            <div
+              ref={modalRef}
+              className="p-6 w-[90%] max-w-md text-center relative bg-gray-900 rounded-xl shadow-2xl border-1 border-purple-700"
+            >
               <h3 className="text-xl font-semibold text-white underline decoration-purple-400 mb-6">
                 View Profile
               </h3>
@@ -373,9 +404,10 @@ export default function Topbar({ isCollapsed }) {
                 </div>
               ) : (
                 // Edit Mode
-                <div className="space-y-3 text-left">
+                <div className="space-y-2 text-left">
+                  {/* Name */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-gray-300">
                       Name
                     </label>
                     <input
@@ -384,12 +416,13 @@ export default function Topbar({ isCollapsed }) {
                       onChange={(e) =>
                         setUser((prev) => ({ ...prev, name: e.target.value }))
                       }
-                      className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm text-sm bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
 
+                  {/* Email */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-gray-300">
                       Email
                     </label>
                     <input
@@ -398,31 +431,101 @@ export default function Topbar({ isCollapsed }) {
                       onChange={(e) =>
                         setUser((prev) => ({ ...prev, email: e.target.value }))
                       }
-                      className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm text-sm bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>
 
+                  {/* Current Password */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300">
-                      Password{" "}
-                      <span className="text-xs text-gray-500">(optional)</span>
+                    <label className="block text-xs font-medium text-gray-300">
+                      Current Password
                     </label>
-                    <input
-                      type="password"
-                      value={user?.password || ""}
-                      onChange={(e) =>
-                        setUser((prev) => ({
-                          ...prev,
-                          password: e.target.value,
-                        }))
-                      }
-                      placeholder="New password"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm text-sm bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showCurrentPassword ? "text" : "password"}
+                        value={user?.currentPassword || ""}
+                        onChange={(e) =>
+                          setUser((prev) => ({
+                            ...prev,
+                            currentPassword: e.target.value,
+                          }))
+                        }
+                        placeholder="Enter current password"
+                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowCurrentPassword(!showCurrentPassword)
+                        }
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-purple-500 text-xs cursor-pointer"
+                      >
+                        {showCurrentPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
                   </div>
 
+                  {/* New Password */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-gray-300">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        value={user?.newPassword || ""}
+                        onChange={(e) =>
+                          setUser((prev) => ({
+                            ...prev,
+                            newPassword: e.target.value,
+                          }))
+                        }
+                        placeholder="Enter new password"
+                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-purple-500 text-xs cursor-pointer"
+                      >
+                        {showNewPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-300">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={user?.confirmPassword || ""}
+                        onChange={(e) =>
+                          setUser((prev) => ({
+                            ...prev,
+                            confirmPassword: e.target.value,
+                          }))
+                        }
+                        placeholder="Confirm new password"
+                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-purple-500 text-xs cursor-pointer"
+                      >
+                        {showConfirmPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Role */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-300">
                       Role
                     </label>
                     <select
@@ -430,7 +533,7 @@ export default function Topbar({ isCollapsed }) {
                       onChange={(e) =>
                         setUser((prev) => ({ ...prev, role: e.target.value }))
                       }
-                      className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm text-sm bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
                       <option value="">Select role</option>
                       <option value="admin">Admin</option>
@@ -465,16 +568,57 @@ export default function Topbar({ isCollapsed }) {
                     onClick={async () => {
                       try {
                         const token = localStorage.getItem("token");
-                        const payload = {
-                          name: user.name,
-                          email: user.email,
-                          role: user.role,
-                        };
-                        if (user.password && user.password.trim() !== "") {
-                          payload.password = user.password;
+                        const name = user.name?.trim() || "";
+                        const email = user.email?.trim() || "";
+                        const role = user.role?.trim() || "";
+
+                        if (!name || !email || !role) {
+                          toast.error("Please fill all required fields.");
+                          return;
                         }
 
-                        const res = await api.put(
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(email)) {
+                          toast.error("Please enter a valid email address.");
+                          return;
+                        }
+
+                        const {
+                          currentPassword,
+                          newPassword,
+                          confirmPassword,
+                        } = user;
+                        const isChangingPassword =
+                          currentPassword || newPassword || confirmPassword;
+
+                        if (isChangingPassword) {
+                          if (
+                            !currentPassword ||
+                            !newPassword ||
+                            !confirmPassword
+                          ) {
+                            toast.error(
+                              "Please fill all password fields to change password."
+                            );
+                            return;
+                          }
+                          if (newPassword !== confirmPassword) {
+                            toast.error(
+                              "New password and confirm password do not match."
+                            );
+                            return;
+                          }
+                        }
+
+                        const payload = { name, email, role };
+
+                        if (isChangingPassword) {
+                          payload.oldPassword = currentPassword;
+                          payload.newPassword = newPassword;
+                          payload.confirmPassword = confirmPassword;
+                        }
+
+                        await api.put(
                           `/auth/users/update-user/${user._id}`,
                           payload,
                           {
@@ -482,19 +626,48 @@ export default function Topbar({ isCollapsed }) {
                           }
                         );
 
-                        const updatedUser = { ...user, password: undefined };
-                        localStorage.setItem(
-                          "user",
-                          JSON.stringify(updatedUser)
+                        toast.success(
+                          "Profile updated successfully! Please Login."
                         );
-                        window.dispatchEvent(new Event("storage"));
 
-                        toast.success("Profile updated successfully...!");
-                        setIsEditing(false);
-                        setShowProfileModal(false);
+                        if (isChangingPassword) {
+                          localStorage.clear();
+                          setTimeout(() => {
+                            window.location.href = "/login";
+                          }, 3000);
+                        } else {
+                          const updatedUser = {
+                            ...user,
+                            password: undefined,
+                            currentPassword: undefined,
+                            newPassword: undefined,
+                            confirmPassword: undefined,
+                          };
+                          localStorage.setItem(
+                            "user",
+                            JSON.stringify(updatedUser)
+                          );
+                          window.dispatchEvent(new Event("storage"));
+                          setIsEditing(false);
+                          setShowProfileModal(false);
+                        }
                       } catch (err) {
                         console.error("Failed to update profile:", err);
-                        toast.error("Error updating profile.");
+
+                        const backendMessage =
+                          err?.response?.data?.message || "";
+
+                        if (
+                          backendMessage.toLowerCase().includes("old password")
+                        ) {
+                          toast.error(
+                            "Old password is incorrect. Please try again."
+                          );
+                        } else {
+                          toast.error(
+                            backendMessage || "Error updating profile."
+                          );
+                        }
                       }
                     }}
                   >

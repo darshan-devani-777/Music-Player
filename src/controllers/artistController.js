@@ -142,34 +142,33 @@ exports.updateArtist = async (req, res) => {
   try {
     const { name, bio } = req.body;
 
-    const updatedFields = {};
-    if (name !== undefined) updatedFields.name = name;
-    if (bio !== undefined) updatedFields.bio = bio;
-    if (req.files && req.files.length > 0) {
-      updatedFields.artistImage = req.files.map((file) => file.path);
-    }
-
-    const updatedArtist = await Artist.findByIdAndUpdate(
-      req.params.id,
-      updatedFields,
-      {
-        new: true,
-        runValidators: true,
-        context: "query",
-      }
-    ).populate("createdBy", "_id name email");
-
-    if (!updatedArtist) {
+    // Find existing artist
+    const artist = await Artist.findById(req.params.id);
+    if (!artist) {
       return res.status(404).json({
         status: "error",
         message: "Artist not found",
       });
     }
 
+    // Update fields if present
+    if (name !== undefined) artist.name = name;
+    if (bio !== undefined) artist.bio = bio;
+
+    // Update images if uploaded
+    if (req.files && req.files.length > 0) {
+      artist.artistImage = req.files.map(file => file.path);
+    }
+
+    // Save the artist (this will run all middleware & validation)
+    const updatedArtist = await artist.save();
+
+    await updatedArtist.populate("createdBy", "_id name email");
+
     await Activity.create({
       user: req.user.userId,
-      action: 'Updated_artist',
-      targetType: 'Artist',
+      action: "Updated_artist",
+      targetType: "Artist",
       targetId: updatedArtist._id,
     });
 

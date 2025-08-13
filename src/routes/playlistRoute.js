@@ -23,11 +23,10 @@ const validate = (req, res, next) => {
   next();
 };
 
-// CREATE PLAYLIST (Admin)
+// CREATE PLAYLIST (Admin / User)
 router.post(
   "/playlist/create-playlist",
   authMiddleware,
-  isAdmin,
   upload.array("playlistImage"),
   createPlaylistValidation,
   validate,
