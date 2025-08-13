@@ -28,26 +28,33 @@ export default function Playlists() {
   // VALIDATION
   const validateForm = () => {
     let newErrors = {};
+
     if (!formData.title.trim()) {
       newErrors.title = "Title is required.";
+    } else if (formData.title.trim().length > 15) {
+      newErrors.title = "Title cannot be more than 15 characters.";
     } else if (!/^[A-Za-z\s]+$/.test(formData.title.trim())) {
       newErrors.title = "Title can only contain alphabets and spaces.";
     } else if (!/[aeiouAEIOU]/.test(formData.title.trim())) {
       newErrors.title =
         "Title must contain at least one vowel (a, e, i, o, u).";
     }
-
+    
     if (!formData.description.trim()) {
       newErrors.description = "Description is required.";
     } else if (formData.description.trim().length < 10) {
       newErrors.description =
         "Description must be at least 10 characters long.";
+    } else if (formData.description.trim().length > 300) {
+      newErrors.description =
+        "Description cannot be more than 300 characters.";
     } else if (!/^[A-Za-z\s.,!?'"]+$/.test(formData.description.trim())) {
       newErrors.description = "Description contains invalid characters.";
     } else if (!/[aeiouAEIOU]/.test(formData.description.trim())) {
       newErrors.description =
         "Description must contain at least one vowel (a, e, i, o, u).";
-    }
+    }    
+
     if (!editId && formData.playlistImage.length === 0)
       newErrors.playlistImage = "At least one image is required.";
     if (formData.selectedAlbums.length === 0)

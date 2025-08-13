@@ -33,13 +33,13 @@ export default function Albums() {
 
     if (!formData.title.trim()) {
       newErrors.title = "Title is required.";
+    } else if (formData.title.trim().length > 15) {
+      newErrors.title = "Title cannot be more than 15 characters.";
     } else if (!/^[A-Za-z0-9\s]+$/.test(formData.title.trim())) {
-      newErrors.title =
-        "Title can only contain alphabets, numbers, and spaces.";
+      newErrors.title = "Title can only contain alphabets, numbers, and spaces.";
     } else if (!/[aeiouAEIOU]/.test(formData.title.trim())) {
-      newErrors.title =
-        "Title must contain at least one vowel (a, e, i, o, u).";
-    }
+      newErrors.title = "Title must contain at least one vowel (a, e, i, o, u).";
+    }    
 
     if (!isEditMode && (!formData.artistId || formData.artistId === "")) {
       newErrors.artistId = "Artist is required.";
@@ -56,7 +56,7 @@ export default function Albums() {
     return newErrors;
   };
 
-    const LOADER_DELAY = 1000;
+  const LOADER_DELAY = 1000;
 
   // FETCH ALBUMS
   const fetchAlbums = async () => {

@@ -29,23 +29,25 @@ export default function Genres() {
 
     if (!formData.name.trim()) {
       newErrors.name = "Name is required.";
+    } else if (formData.name.trim().length > 15) {
+      newErrors.name = "Name cannot be more than 15 characters.";
     } else if (!/^[A-Za-z\s]+$/.test(formData.name.trim())) {
       newErrors.name = "Name can only contain alphabets and spaces.";
     } else if (!/[aeiouAEIOU]/.test(formData.name.trim())) {
       newErrors.name = "Name must contain at least one vowel (a, e, i, o, u).";
     }
-
+    
     if (!formData.description.trim()) {
       newErrors.description = "Description is required.";
     } else if (formData.description.trim().length < 10) {
-      newErrors.description =
-        "Description must be at least 10 characters long.";
+      newErrors.description = "Description must be at least 10 characters long.";
+    } else if (formData.description.trim().length > 300) {
+      newErrors.description = "Description cannot be more than 300 characters.";
     } else if (!/^[A-Za-z\s.,!?'"]+$/.test(formData.description.trim())) {
       newErrors.description = "Description contains invalid characters.";
     } else if (!/[aeiouAEIOU]/.test(formData.description.trim())) {
-      newErrors.description =
-        "Description must contain at least one vowel (a, e, i, o, u).";
-    }
+      newErrors.description = "Description must contain at least one vowel (a, e, i, o, u).";
+    }    
 
     if (!editId && formData.genreImage.length === 0) {
       newErrors.genreImage = "At least one image is required.";

@@ -16,6 +16,16 @@ export default function Favourites() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const validateId = (id) => {
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/; 
+    if (!id.trim()) {
+      return "ID is required.";
+    } else if (!objectIdRegex.test(id.trim())) {
+      return "ID must be a valid MongoDB ObjectId (24 hex characters).";
+    }
+    return "";
+  };
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, activeTab]);
@@ -47,14 +57,14 @@ export default function Favourites() {
 
   // FETCH FAVOURITE BY USER
   const fetchFavouritesByUser = async () => {
-    if (!userId.trim()) return setError("Please enter User ID");
+    const validationError = validateId(userId);
+    if (validationError) return setError(validationError);
+  
     setLoading(true);
     try {
       const res = await api.get(
         `auth/favourite/get-all-favourite-specific-user/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setUserFavourites(res.data.favourites);
       setError("");
@@ -68,14 +78,14 @@ export default function Favourites() {
 
   // FETCH USER BY SONG
   const fetchUsersBySong = async () => {
-    if (!songId.trim()) return setError("Please enter Song ID");
+    const validationError = validateId(songId);
+    if (validationError) return setError(validationError);
+  
     setLoading(true);
     try {
       const res = await api.get(
         `auth/favourite/get-all-user-specific-favourite/song/${songId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setSongFavourites(res.data.users);
       setError("");

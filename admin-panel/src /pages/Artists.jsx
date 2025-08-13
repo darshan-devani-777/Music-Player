@@ -30,21 +30,25 @@ export default function Artists() {
 
     if (!name) {
       newErrors.name = "Name is required.";
+    } else if (name.length > 15) {
+      newErrors.name = "Name cannot be more than 15 characters.";
     } else if (!/^[A-Za-z\s]+$/.test(name)) {
       newErrors.name = "Name can only contain alphabets and spaces.";
     } else if (!/[aeiouAEIOU]/.test(name)) {
       newErrors.name = "Name must contain at least one vowel (a, e, i, o, u).";
     }
-
+    
     if (!bio) {
       newErrors.bio = "Bio is required.";
     } else if (bio.length < 10) {
       newErrors.bio = "Bio must be at least 10 characters long.";
+    } else if (bio.length > 200) {
+      newErrors.bio = "Bio cannot be more than 200 characters.";
     } else if (!/^[A-Za-z\s.,!?'"]+$/.test(bio)) {
       newErrors.bio = "Bio contains invalid characters.";
     } else if (!/[aeiouAEIOU]/.test(bio)) {
       newErrors.bio = "Bio must contain at least one vowel (a, e, i, o, u).";
-    }
+    }    
 
     if (!editId && !formData.artistImage) {
       newErrors.artistImage = "Image is required.";

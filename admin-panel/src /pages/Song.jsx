@@ -69,21 +69,30 @@ export default function Songs() {
 
     if (!titleValue.trim()) {
       newErrors.title = "Title is required.";
+    } else if (titleValue.trim().length > 15) {
+      newErrors.title = "Title cannot be more than 15 characters.";
     } else if (!/^[A-Za-z\s]+$/.test(titleValue.trim())) {
       newErrors.title = "Title can only contain alphabets and spaces.";
     } else if (!/[aeiouAEIOU]/.test(titleValue.trim())) {
-      newErrors.title =
-        "Title must contain at least one vowel (a, e, i, o, u).";
-    }
+      newErrors.title = "Title must contain at least one vowel (a, e, i, o, u).";
+    }    
 
     if (!durationValue.trim()) {
       newErrors.duration = "Duration is required.";
     } else {
       const durationRegex = /^\d{1,2}:[0-5][0-9]$/;
-      if (!durationRegex.test(durationValue.trim())) {
+      const trimmedDuration = durationValue.trim();
+    
+      if (!durationRegex.test(trimmedDuration)) {
         newErrors.duration = "Duration must be in MM:SS format (e.g., 2:20).";
+      } else {
+        const [minutes, seconds] = trimmedDuration.split(":").map(Number);
+        if (minutes > 99) {
+          newErrors.duration = "Duration cannot exceed 99 minutes.";
+        }
       }
-    }
+    }    
+
     if (!fileUrlValue.trim()) newErrors.fileUrl = "Audio File URL is required.";
     if (!artistIdValue.trim()) newErrors.artistId = "Artist ID is required.";
     if (!albumIdValue.trim()) newErrors.albumId = "Album ID is required.";
