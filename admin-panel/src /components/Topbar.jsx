@@ -354,13 +354,13 @@ export default function Topbar({ isCollapsed }) {
 
       {/* Profile Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/0 backdrop-blur-sm">
           <div className="w-full h-full flex items-center justify-center">
             <div
               ref={modalRef}
-              className="p-6 w-[90%] max-w-md text-center relative bg-gray-900 rounded-xl shadow-2xl border-1 border-purple-700"
+              className="p-6 w-[90%] max-w-md text-center relative bg-white/85 rounded-xl shadow-2xl border-1 border-purple-700"
             >
-              <h3 className="text-xl font-semibold text-white underline decoration-purple-400 mb-6">
+              <h3 className="text-xl font-semibold text-black underline decoration-purple-400 mb-6">
                 View Profile
               </h3>
 
@@ -374,31 +374,31 @@ export default function Topbar({ isCollapsed }) {
                 // View Mode
                 <div className="space-y-4 text">
                   <div>
-                    <label className="block font-medium text-purple-400">
+                    <label className="block font-medium text-purple-500">
                       Name
                     </label>
-                    <p className="text-sm text-gray-200">{user?.name}</p>
+                    <p className="text-sm text-black">{user?.name}</p>
                   </div>
 
                   <div>
-                    <label className="block font-medium text-purple-400">
+                    <label className="block font-medium text-purple-500">
                       Email
                     </label>
-                    <p className="text-sm text-gray-200">{user?.email}</p>
+                    <p className="text-sm text-black">{user?.email}</p>
                   </div>
 
                   <div>
-                    <label className="block font-medium text-purple-400">
+                    <label className="block font-medium text-purple-500">
                       Password
                     </label>
-                    <p className="text-gray-300 italic text-sm">••••••••</p>
+                    <p className="text-black italic text-sm">••••••••</p>
                   </div>
 
                   <div>
-                    <label className="block font-medium text-purple-400">
+                    <label className="block font-medium text-purple-500">
                       Role
                     </label>
-                    <p className="text-sm font-semibold capitalize text-green-400">
+                    <p className="text-sm font-semibold capitalize text-green-500">
                       {user?.role}
                     </p>
                   </div>
@@ -408,7 +408,7 @@ export default function Topbar({ isCollapsed }) {
                 <div className="space-y-2 text-left">
                   {/* Name */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-black">
                       Name
                     </label>
                     <input
@@ -417,13 +417,13 @@ export default function Topbar({ isCollapsed }) {
                       onChange={(e) =>
                         setUser((prev) => ({ ...prev, name: e.target.value }))
                       }
-                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-white text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 hover:border-purple-400"
                     />
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-black">
                       Email
                     </label>
                     <input
@@ -432,13 +432,13 @@ export default function Topbar({ isCollapsed }) {
                       onChange={(e) =>
                         setUser((prev) => ({ ...prev, email: e.target.value }))
                       }
-                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-white text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 hover:border-purple-400"
                     />
                   </div>
 
                   {/* Current Password */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-black">
                       Current Password
                     </label>
                     <div className="relative">
@@ -452,14 +452,14 @@ export default function Topbar({ isCollapsed }) {
                           }))
                         }
                         placeholder="Enter current password"
-                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-white text-gray-600 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 hover:border-purple-400"
                       />
                       <button
                         type="button"
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-purple-500 text-xs cursor-pointer"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-purple-500 text-[11px] cursor-pointer"
                       >
                         {showCurrentPassword ? "Hide" : "Show"}
                       </button>
@@ -468,7 +468,7 @@ export default function Topbar({ isCollapsed }) {
 
                   {/* New Password */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-black">
                       New Password
                     </label>
                     <div className="relative">
@@ -482,12 +482,12 @@ export default function Topbar({ isCollapsed }) {
                           }))
                         }
                         placeholder="Enter new password"
-                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 hover:border-purple-400"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-purple-500 text-xs cursor-pointer"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-purple-500 text-[11px] cursor-pointer"
                       >
                         {showNewPassword ? "Hide" : "Show"}
                       </button>
@@ -496,7 +496,7 @@ export default function Topbar({ isCollapsed }) {
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-black">
                       Confirm Password
                     </label>
                     <div className="relative">
@@ -510,14 +510,14 @@ export default function Topbar({ isCollapsed }) {
                           }))
                         }
                         placeholder="Confirm new password"
-                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        className="mt-0.5 block w-full pl-2 pr-8 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 hover:border-purple-400"
                       />
                       <button
                         type="button"
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-purple-500 text-xs cursor-pointer"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-purple-500 text-[11px] cursor-pointer"
                       >
                         {showConfirmPassword ? "Hide" : "Show"}
                       </button>
@@ -526,7 +526,7 @@ export default function Topbar({ isCollapsed }) {
 
                   {/* Role */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-300">
+                    <label className="block text-xs font-medium text-black">
                       Role
                     </label>
                     <select
@@ -534,7 +534,7 @@ export default function Topbar({ isCollapsed }) {
                       onChange={(e) =>
                         setUser((prev) => ({ ...prev, role: e.target.value }))
                       }
-                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      className="mt-0.5 block w-full px-2 py-1 border border-gray-600 rounded-md shadow-sm text-xs bg-white text-black focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer hover:border-purple-400"
                     >
                       <option value="">Select role</option>
                       <option value="admin">Admin</option>

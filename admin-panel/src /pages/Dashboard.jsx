@@ -48,11 +48,11 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchAllData = async () => {
       setLoading(true);
-
+  
       try {
         const token = localStorage.getItem("token");
         const config = { headers: { Authorization: `Bearer ${token}` } };
-
+  
         // FETCH DASHBOARD COUNT
         const [
           userRes,
@@ -63,33 +63,15 @@ export default function Dashboard() {
           songRes,
           favouriteRes,
         ] = await Promise.all([
-          axios.get(
-            "http://localhost:5000/api/auth/users/get-all-user",
-            config
-          ),
-          axios.get(
-            "http://localhost:5000/api/auth/artist/get-all-artist",
-            config
-          ),
-          axios.get(
-            "http://localhost:5000/api/auth/playlist/get-all-playlist",
-            config
-          ),
-          axios.get(
-            "http://localhost:5000/api/auth/album/get-all-album",
-            config
-          ),
-          axios.get(
-            "http://localhost:5000/api/auth/genre/get-all-genre",
-            config
-          ),
+          axios.get("http://localhost:5000/api/auth/users/get-all-user", config),
+          axios.get("http://localhost:5000/api/auth/artist/get-all-artist", config),
+          axios.get("http://localhost:5000/api/auth/playlist/get-all-playlist", config),
+          axios.get("http://localhost:5000/api/auth/album/get-all-album", config),
+          axios.get("http://localhost:5000/api/auth/genre/get-all-genre", config),
           axios.get("http://localhost:5000/api/auth/song/get-all-song", config),
-          axios.get(
-            "http://localhost:5000/api/auth/favourite/get-all-favourite",
-            config
-          ),
+          axios.get("http://localhost:5000/api/auth/favourite/get-all-favourite", config),
         ]);
-
+  
         setUserCount(userRes.data.data.length);
         setArtistCount(artistRes.data.data.length);
         setPlaylistCount(playlistRes.data.data.length);
@@ -97,7 +79,7 @@ export default function Dashboard() {
         setGenreCount(genreRes.data.data.length);
         setSongCount(songRes.data.data.length);
         setFavouriteCount(favouriteRes.data.favourites.length);
-
+  
         // FETCH RECENT ACTIVITY
         const activitiesRes = await api.get(
           "http://localhost:5000/api/auth/activities/recent",
@@ -106,41 +88,60 @@ export default function Dashboard() {
         if (activitiesRes.data.success) {
           setActivities(activitiesRes.data.data);
         }
-
+  
         // FETCH CHART DATA
-        const chartRes = await api.get(
-          "/auth/activities/get-user-additions",
-          config
-        );
+        const chartRes = await api.get("/auth/activities/get-user-additions", config);
         if (chartRes.data.success && Array.isArray(chartRes.data.data)) {
           const chartLabels = chartRes.data.data.map((item) => item.date);
           const chartCounts = chartRes.data.data.map((item) => item.count);
           const maxCount = Math.max(...chartCounts);
           const suggestedMax = Math.ceil((maxCount + 2) / 5) * 5;
-
+  
+          const gradient = (ctx) => {
+            const chart = ctx.chart;
+            const { ctx: c, chartArea } = chart;
+            if (!chartArea) return null;
+            const grd = c.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            grd.addColorStop(0, "rgba(124, 58, 237, 0)"); 
+            grd.addColorStop(1, "rgba(124, 58, 237, 0.3)"); 
+            return grd;
+          };
+  
           setChartData({
             labels: chartLabels,
             datasets: [
               {
                 label: "User Additions",
                 data: chartCounts,
-                backgroundColor: "rgba(124, 58, 237, 0.1)",
                 borderColor: "#7C3AED",
-                tension: 0.4,
+                borderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                tension: 0.5, 
                 fill: true,
+                backgroundColor: (ctx) => gradient(ctx),
               },
             ],
             options: {
               responsive: true,
+              animation: { duration: 1500, easing: "easeOutQuart" },
               plugins: {
                 legend: { display: true, position: "top" },
                 tooltip: {
                   enabled: true,
                   mode: "index",
                   intersect: false,
+                  backgroundColor: "rgba(124, 58, 237, 0.9)",
+                  titleColor: "#fff",
+                  bodyColor: "#fff",
+                  titleFont: { size: 14, weight: "bold" },
+                  bodyFont: { size: 12 },
+                  padding: 10,
+                  cornerRadius: 6,
+                  displayColors: false,
                   callbacks: {
-                    label: (context) =>
-                      `📅 ${context.label}: ${context.parsed.y} users joined`,
+                    title: (context) => `📅 ${context[0].label}`,
+                    label: (context) => `👤 ${context.parsed.y} users joined`,
                   },
                 },
               },
@@ -150,14 +151,15 @@ export default function Dashboard() {
                   suggestedMax,
                   ticks: {
                     stepSize: 1,
-                    callback: (value) =>
-                      Number.isInteger(value) ? value : null,
+                    callback: (value) => Number.isInteger(value) ? value : null,
                   },
                 },
+                x: { grid: { display: false } }, 
               },
             },
           });
         }
+  
         await new Promise((resolve) => setTimeout(resolve, 700));
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
@@ -166,10 +168,10 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-
+  
     fetchAllData();
   }, []);
-
+  
   const cards = [
     {
       label: "Users",
@@ -222,7 +224,6 @@ export default function Dashboard() {
     },
   ];
 
-  // memoized filtered list
   const filteredActivities = useMemo(() => {
     if (!searchTerm || searchTerm.trim() === "") return activities || [];
 
@@ -241,7 +242,7 @@ export default function Dashboard() {
           email.includes(term) ||
           action.includes(term) ||
           target.includes(term) ||
-          // also try to match date (dd/mm/yyyy)
+          // match date (dd/mm/yyyy)
           (item.createdAt &&
             new Date(item.createdAt)
               .toLocaleDateString("en-GB")
@@ -258,7 +259,7 @@ export default function Dashboard() {
       if (searchField === "date") {
         if (!item.createdAt) return false;
 
-        // Format to DD/MM/YYYY (same as table display)
+        // Format to DD/MM/YYYY 
         const activityDateStr = new Date(item.createdAt).toLocaleString(
           "en-GB",
           {
@@ -268,7 +269,7 @@ export default function Dashboard() {
           }
         );
 
-        // Format selected date to same DD/MM/YYYY
+        // DD/MM/YYYY
         const selectedDateStr = new Date(term).toLocaleString("en-GB", {
           day: "2-digit",
           month: "2-digit",
@@ -310,7 +311,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 px-2 sm:px-4">
       {loading ? (
-        <Loader /> // loader shows while loading is true
+        <Loader /> 
       ) : (
         <>
           <style>
@@ -322,6 +323,7 @@ export default function Dashboard() {
         `}
           </style>
 
+        {/* welcome */}
           <div className="flex flex-wrap justify-center sm:justify-between gap-4 p-2 sm:p-4 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-900 text-white rounded-xl shadow-lg overflow-hidden">
             <div
               className="flex gap-3 animate-[scroll-right_7s_linear_infinite]"
@@ -344,6 +346,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+        {/* Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {cards.map((card, idx) => (
               <div

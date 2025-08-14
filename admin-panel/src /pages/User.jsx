@@ -330,7 +330,15 @@ export default function Users() {
                         {user.email || "N/A"}
                       </td>
                       <td className="p-3 border border-gray-300 text-sm">
-                        {user.role || "N/A"}
+                        {user.role === "admin" ? (
+                          <span className="bg-purple-100/90 text-purple-700 px-2 py-1 rounded-full">
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="bg-blue-100/90 text-blue-700 px-2 py-1 rounded-full">
+                            User
+                          </span>
+                        )}
                       </td>
                       <td className="p-3 border border-gray-300 text-sm">
                         {user.loginType || "N/A"}

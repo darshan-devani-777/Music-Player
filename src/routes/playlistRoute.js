@@ -58,11 +58,10 @@ router.put(
   playlistController.updatePlaylist
 );
 
-// DELETE PLAYLIST (Admin)
+// DELETE PLAYLIST (Admin / User)
 router.delete(
   "/playlist/delete-playlist/:id",
   authMiddleware,
-  isAdmin,
   playlistController.deletePlaylist
 );
 
